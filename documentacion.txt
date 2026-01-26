@@ -1,0 +1,4 @@
+tecnologias utilizadas en este proyecto
+pocketbase -> backend
+vite + react -> frontend
+shadcn -> components frontend
