@@ -1,0 +1,16 @@
+ignoredBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+onlyBuiltDependencies:
+  - react
+  - 'react-dom'
+  - 'react-router-dom'
+  - 'react-hook-form'
+  - 'yup'
+  - '@hookform/resolvers'
+  - axios
+  - dayjs
+  - 'dayjs/plugin/customParseFormat'
+  - 'dayjs/plugin/localeData'
+  - 'dayjs/plugin/utc'    
+  - 'sqlite3'
