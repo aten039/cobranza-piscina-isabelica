@@ -33,6 +33,7 @@ func main() {
 		openBrowser(AppURL)
 		return
 	}
+
 	if len(os.Args) == 1 {
 		log.Println("Iniciando sistema...")
 
