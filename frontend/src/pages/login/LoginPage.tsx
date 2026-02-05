@@ -34,7 +34,11 @@ export default function LoginPage() {
             <input className="text-xl border-b-2 p-2 outline-none focus:ring-0 focus:border-blue-500" type="password" id="password" name="password" required placeholder="Contraseña"/>
           
             <div className="flex justify-end">  
-              <button className=" mt-8  w-fit px-4 bg-blue-700 uppercase font-bold text-white p-2 rounded text-xl cursor-pointer hover:bg-blue-800 transition-colors " type="submit" disabled={isLoading}>iniciar sesion</button>
+              {
+              isLoading ? <p>Loading...</p>: 
+              
+              <button className=" mt-8  w-fit px-4 bg-blue-700 uppercase font-bold text-white p-2 rounded text-xl cursor-pointer hover:bg-blue-800 transition-colors " type="submit" disabled={isLoading}>iniciar sesion</button>}   
+              
             </div>
             <div> 
               <Link to="/register" className=" text-sm text-blue-600 ">registrar un nuevo usuario</Link>
@@ -44,7 +48,6 @@ export default function LoginPage() {
             
 
           </form>
-          {isLoading && <p>Loading...</p>}    
           {error && <p style={{color: 'red'}}>{error}</p>}
         </div>
       </div>
