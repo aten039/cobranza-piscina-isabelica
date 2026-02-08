@@ -4,16 +4,15 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Coolvetica", ui-sans-serif, system-ui;
   --font-titulo: "Akira", sans-serif;
 }
 
 @font-face {
   font-family: 'Coolvetica';
-  src: url('/fonts/coolvetica.otf') format('opentype');
+  src: url('./fonts/coolvetica.otf') format('opentype');
 }
 
 @font-face {
   font-family: 'Akira';
-  src: url('/fonts/akira_expanded.otf') format('opentype');
+  src: url('./fonts/akira_expanded.otf') format('opentype');
 }

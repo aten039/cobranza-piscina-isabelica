@@ -14,7 +14,7 @@ export default function Menu({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     { label: 'Inicio', icon: <MdDashboard size={24} />, path: '/' },
     { label: 'Atletas', icon: <MdGroups size={24} />, path: '/atletas' },
     { label: 'Inscribir', icon: <MdPersonAdd size={24} />, path: '/inscribir' },
-    { label: 'Profesores', icon: <MdSportsKabaddi size={24} />, path: '/entrenadores' },
+    { label: 'Entrenadores', icon: <MdSportsKabaddi size={24} />, path: '/entrenadores' },
     { label: 'Pagos', icon: <MdPayments size={24} />, path: '/pagos' },
   ];
 
@@ -63,7 +63,7 @@ export default function Menu({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 className={({ isActive }) => `
                   flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
                   ${isActive 
-                    ? 'bg-blue-50 text-blue-600' // Estilo Activo
+                    ? 'bg-blue-100 text-blue-600' // Estilo Activo
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' // Estilo Inactivo
                   }
                 `}
@@ -77,7 +77,7 @@ export default function Menu({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           <div className="mt-auto pt-6 border-t border-gray-200 flex items-center gap-3">
             
             <div>
-              <p className="text-sm font-bold text-gray-900">Manuel Lista</p>
+              <p className="text-sm font-bold text-gray-900">Sistema de gestion de cobranzas</p>
               <p className="text-xs text-gray-500">Administrador</p>
             </div>
           </div>
