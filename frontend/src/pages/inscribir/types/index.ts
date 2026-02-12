@@ -14,6 +14,7 @@ export interface IClass {
   id: string;
   nombre: string;
   costo: number;
+  edadMin: number;
   
   // Campos "crudos" en la base de datos (son los IDs)
   entrenador_id: string; 

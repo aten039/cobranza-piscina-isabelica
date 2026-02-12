@@ -1,17 +1,26 @@
+import React, { useState, useEffect } from 'react';
+import { MdSettings, MdArrowForward, MdArrowBack, MdEventNote } from 'react-icons/md';
+import { FaSpinner } from 'react-icons/fa';
+
+// Componentes
 import { PaymentForm } from '@/pages/inscribir/components/PaymentForm';
 import { PersonalDataForm } from '@/pages/inscribir/components/PersonalDataForm';
 import { RepresentativeForm } from '@/pages/inscribir/components/RepresentativeForm';
 import { SummaryCard } from '@/pages/inscribir/components/SummaryCard';
-import { getClases, saveInscription } from '@/pages/inscribir/services/inscribir';
+
+// Tipos
 import type { IClass, IFormData } from '@/pages/inscribir/types';
-import React, { useState, useEffect } from 'react';
-import { MdSettings, MdArrowForward, MdArrowBack } from 'react-icons/md';
+import { getClases, saveInscription } from '@/pages/inscribir/services/inscribir';
 
 const InscribirPages: React.FC = () => {
   // --- Estados ---
   const [step, setStep] = useState<number>(1);
   const [age, setAge] = useState<number | null>(null);
+  
+  // Estados de carga
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingClasses, setLoadingClasses] = useState<boolean>(false); // Nuevo estado para el select
+  
   const [availableClasses, setAvailableClasses] = useState<IClass[]>([]);
 
   const [formData, setFormData] = useState<IFormData>({
@@ -23,23 +32,14 @@ const InscribirPages: React.FC = () => {
     classId: '', 
     // Valores por defecto para pagos
     currency: 'USD', 
-    paymentMethod: 'zelle', // Ajustar según moneda por defecto
-    paymentRef: '', paymentDate:'',
+    paymentMethod: 'zelle', 
+    paymentRef: '', paymentDate: new Date().toISOString().split('T')[0],
     coverageDate: '', paymentAmount: 0,
   });
 
   const isMinor = age !== null && age < 18;
 
-  // --- Cargar Clases ---
-  useEffect(() => {
-    const loadClasses = async () => {
-      const clases = await getClases();
-      setAvailableClasses(clases);
-    };
-    loadClasses();
-  }, []);
-
-  // --- Calcular Edad ---
+  // --- 1. Calcular Edad (Trigger: cambio en fecha de nacimiento) ---
   useEffect(() => {
     if (formData.dob) {
       const birthDate = new Date(formData.dob);
@@ -49,23 +49,54 @@ const InscribirPages: React.FC = () => {
       if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
         calculatedAge--;
       }
+      
       setAge(calculatedAge);
+
+      // Limpiar teléfono si pasa de mayor a menor (opcional)
       if (calculatedAge < 18) {
         setFormData(prev => ({ ...prev, phoneNum: '' }));
       }
     } else {
       setAge(null);
+      setAvailableClasses([]); // Si borra la fecha, limpiamos las clases
     }
   }, [formData.dob]);
 
+  // --- 2. Cargar Clases Filtradas (Trigger: cambio en edad) ---
+  useEffect(() => {
+    const fetchClases = async () => {
+      // Solo buscamos si hay una edad válida calculada
+      if (age !== null && age >= 0) {
+        setLoadingClasses(true);
+        // Limpiamos la selección actual para evitar inconsistencias
+        setFormData(prev => ({ ...prev, classId: '' })); 
+        
+        try {
+            // Llamamos al servicio nuevo que recibe la edad
+            const clases = await getClases(age);
+            setAvailableClasses(clases);
+        } catch (error) {
+            console.error(error);
+            setAvailableClasses([]);
+        } finally {
+            setLoadingClasses(false);
+        }
+      } else {
+        setAvailableClasses([]);
+      }
+    };
+
+    fetchClases();
+  }, [age]); // Se ejecuta cada vez que la edad cambia
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    // Manejo seguro de checkbox
     const checked = (e.target as HTMLInputElement).checked;
     
     setFormData(prev => ({
       ...prev,
-      // Si es paymentAmount, nos aseguramos que se guarde como número
-      [name]: type === 'checkbox' ? checked : (name === 'paymentAmount' ? parseFloat(value) : value)
+      [name]: type === 'checkbox' ? checked : (name === 'paymentAmount' ? parseFloat(value) || 0 : value)
     }));
   };
 
@@ -109,18 +140,17 @@ const InscribirPages: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // --- NUEVA VALIDACIÓN DE MONEDA ---
+    // Validación extra de moneda
     if (formData.currency === 'BS') {
         if (!formData.paymentAmount || formData.paymentAmount <= 0) {
             alert("⚠️ Error: El MONTO es obligatorio para pagos en Bolívares.");
-            return; // Detenemos el envío
+            return;
         }
     }
-    // ----------------------------------
 
     setIsLoading(true);
     try {
-      // Como ya actualizaste PocketBase, formData.currency y formData.paymentAmount se guardarán
+      // Usamos el servicio modularizado saveInscription
       await saveInscription(formData, age);
       alert("✅ Inscripción exitosa.");
       window.location.reload();
@@ -171,31 +201,77 @@ const InscribirPages: React.FC = () => {
               <h3 className="font-bold text-lg mb-4 text-gray-700 flex items-center gap-2">
                 <MdSettings className="text-xl" /> Horarios Disponibles
               </h3>
+              
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Seleccione una Clase</label>
-                  <select 
-                    name="classId" 
-                    value={formData.classId} 
-                    onChange={handleChange} 
-                    className="w-full border border-blue-200 bg-blue-50/30 rounded-xl p-3 text-sm font-medium outline-none text-blue-800"
-                  >
-                    <option value="">-- Seleccione Horario --</option>
-                    {availableClasses.map((clase) => {
-                      const nombreProfe = clase.expand?.entrenador_id?.nombre || 'Sin entrenador';
-                      const apellidoProfe = clase.expand?.entrenador_id?.apellido || '';
-                      return (
-                        <option key={clase.id} value={clase.id}>
-                          {clase.nombre} | {nombreProfe} {apellidoProfe} | ${clase.costo}
-                        </option>
-                      );
-                    })}
-                  </select>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase">Seleccione una Clase</label>
+                    {age !== null && (
+                        <span className="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                            Edad del alumno: {age} años
+                        </span>
+                    )}
+                  </div>
+
+                  <div className="relative">
+                      <select 
+                        name="classId" 
+                        value={formData.classId} 
+                        onChange={handleChange} 
+                        disabled={loadingClasses || age === null}
+                        className={`w-full border rounded-xl p-3 text-sm font-medium outline-none appearance-none transition-colors
+                            ${loadingClasses ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50/30 border-blue-200 text-blue-800'}
+                        `}
+                      >
+                        {/* Lógica de opciones del Select */}
+                        {age === null ? (
+                            <option value="">-- Indique Fecha de Nacimiento Primero --</option>
+                        ) : loadingClasses ? (
+                            <option value="">Buscando clases compatibles...</option>
+                        ) : availableClasses.length === 0 ? (
+                            <option value="">-- No hay clases para esta edad --</option>
+                        ) : (
+                            <option value="">-- Seleccione Horario --</option>
+                        )}
+
+                        {availableClasses.map((clase) => {
+                          const nombreProfe = clase.expand?.entrenador_id?.nombre || 'Sin entrenador';
+                          const apellidoProfe = clase.expand?.entrenador_id?.apellido || '';
+                          
+                          // Formateo de horarios si vienen expandidos (opcional, depende de tu estructura)
+                          // const horariosText = ...
+                          
+                          return (
+                            <option key={clase.id} value={clase.id}>
+                              {clase.nombre} | {nombreProfe} {apellidoProfe} | ${clase.costo} | Min: {clase.edadMin} años
+                            </option>
+                          );
+                        })}
+                      </select>
+                      
+                      {/* Indicador de carga absoluto */}
+                      {loadingClasses && (
+                          <div className="absolute right-3 top-3.5 text-blue-500 animate-spin">
+                              <FaSpinner />
+                          </div>
+                      )}
+                  </div>
+                  
+                  {age === null && (
+                      <p className="text-xs text-orange-500 mt-2 flex items-center gap-1">
+                          <MdEventNote /> Debe ingresar la fecha de nacimiento para filtrar las clases.
+                      </p>
+                  )}
                 </div>
 
                 <button 
                   onClick={handleNextStep} 
-                  className="cursor-pointer w-full py-4 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-lg shadow-lg flex justify-center items-center gap-2 transition-transform active:scale-95"
+                  disabled={loadingClasses || availableClasses.length === 0}
+                  className={`cursor-pointer w-full py-4 rounded-xl font-bold text-lg shadow-lg flex justify-center items-center gap-2 transition-all active:scale-95
+                    ${loadingClasses || availableClasses.length === 0 
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                        : 'bg-gray-900 hover:bg-black text-white'}
+                  `}
                 >
                   Siguiente <MdArrowForward className="text-xl" />
                 </button>

@@ -1,5 +1,5 @@
 import type { IFormData } from '@/pages/inscribir/types';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MdPayments, MdCheckCircle, MdDateRange } from 'react-icons/md';
 
 interface PaymentProps {
@@ -28,8 +28,49 @@ export const PaymentForm: React.FC<PaymentProps> = ({ formData, setFormData, han
     ]
   };
   
-  // Selección dinámica de opciones
   const currentOptions = paymentOptions[formData.currency as keyof typeof paymentOptions] || paymentOptions.BS;
+
+  // --- EFECTO DE CÁLCULO DE FECHA MEJORADO ---
+  useEffect(() => {
+    if (formData.paymentDate) {
+      // 1. Desglosamos la fecha manualmente para evitar problemas de zona horaria (UTC vs Local)
+      const [yearStr, monthStr, dayStr] = formData.paymentDate.split('-');
+      const year = parseInt(yearStr);
+      const month = parseInt(monthStr); // 1 - 12
+      const day = parseInt(dayStr);
+
+      // 2. Calculamos el mes siguiente
+      let nextMonth = month + 1;
+      let nextYear = year;
+
+      if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear = year + 1;
+      }
+
+      // 3. Ajuste de días (La lógica clave)
+      // Obtenemos el último día del mes destino (ej: Feb = 28 o 29)
+      // new Date(año, mes, 0) devuelve el último día del mes anterior a "mes".
+      // Como nextMonth es 1-based, usarlo tal cual como índice nos da el último día de ESE mes.
+      const daysInNextMonth = new Date(nextYear, nextMonth, 0).getDate();
+
+      // Si el día original (ej: 31) es mayor que los días del mes siguiente (ej: 28),
+      // nos quedamos con el último día disponible (28).
+      // Si no, mantenemos el mismo día (ej: 15).
+      const finalDay = Math.min(day, daysInNextMonth);
+
+      // 4. Formateamos a YYYY-MM-DD con ceros a la izquierda
+      const mm = String(nextMonth).padStart(2, '0');
+      const dd = String(finalDay).padStart(2, '0');
+      const nextMonthStr = `${nextYear}-${mm}-${dd}`;
+
+      // 5. Actualizamos solo si es diferente para evitar bucles
+      if (formData.coverageDate !== nextMonthStr) {
+          setFormData(prev => ({ ...prev, coverageDate: nextMonthStr }));
+      }
+    }
+  }, [formData.paymentDate, setFormData]); 
+
 
   const handleCurrencyChange = (currency: 'USD' | 'BS') => {
     const defaultMethod = paymentOptions[currency][0].value;
@@ -37,28 +78,11 @@ export const PaymentForm: React.FC<PaymentProps> = ({ formData, setFormData, han
       ...prev, 
       currency, 
       paymentMethod: defaultMethod 
-      // Opcional: Si cambias de moneda, podrías querer resetear el monto
-      // paymentAmount: 0 
     }));
   };
 
-  // Auto-Calcular Cobertura (Mes siguiente)
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
-    
-    setFormData(prev => {
-      if (!newDate) return { ...prev, paymentDate: newDate };
-      
-      const dateObj = new Date(newDate);
-      dateObj.setMonth(dateObj.getMonth() + 1);
-      const nextMonthStr = dateObj.toISOString().split('T')[0];
-
-      return {
-        ...prev,
-        paymentDate: newDate,
-        coverageDate: nextMonthStr 
-      };
-    });
+  const handlePaymentDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      handleChange(e); 
   };
 
   return (
@@ -90,10 +114,9 @@ export const PaymentForm: React.FC<PaymentProps> = ({ formData, setFormData, han
           </select>
         </div>
         
-        {/* --- SECCIÓN DE DETALLES DEL PAGO --- */}
         <div className="p-4 bg-gray-800 rounded-xl border border-gray-700 animate-fade space-y-4">
            
-           {/* CAMPO DE MONTO CON VALIDACIÓN CONDICIONAL */}
+           {/* Monto */}
            <div>
              <label className="text-xs text-gray-400 font-bold mb-1 block">
                Monto a Pagar {formData.currency === 'BS' && <span className="text-red-500">*</span>}
@@ -110,7 +133,6 @@ export const PaymentForm: React.FC<PaymentProps> = ({ formData, setFormData, han
                  placeholder="0.00"
                  min="0"
                  step="0.01"
-                 // AQUÍ ESTÁ LA CLAVE: Si es BS, el campo es requerido por HTML5
                  required={formData.currency === 'BS'}
                  className={`w-full bg-gray-700 border rounded p-2 pl-8 text-sm text-white focus:outline-none placeholder-gray-500
                    ${formData.currency === 'BS' && (!formData.paymentAmount || formData.paymentAmount <= 0) ? 'border-red-500/50 focus:border-red-500' : 'border-gray-600 focus:border-green-500'}
@@ -122,7 +144,7 @@ export const PaymentForm: React.FC<PaymentProps> = ({ formData, setFormData, han
              )}
            </div>
 
-           {/* Referencia (Solo si no es efectivo) */}
+           {/* Referencia */}
            {!formData.paymentMethod.includes('efectivo') && (
              <div>
                <label className="text-xs text-gray-400 font-bold mb-1 block">Número de Referencia</label>
@@ -142,7 +164,7 @@ export const PaymentForm: React.FC<PaymentProps> = ({ formData, setFormData, han
                  type="date" 
                  name="paymentDate"
                  value={formData.paymentDate}
-                 onChange={handleDateChange}
+                 onChange={handlePaymentDateChange}
                  className="w-full bg-gray-700 border-gray-600 rounded p-2 text-sm text-white focus:outline-none focus:border-green-500" 
                />
              </div>

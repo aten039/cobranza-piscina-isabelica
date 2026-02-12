@@ -6,7 +6,7 @@ import {
   UpdateEntrenadorError 
 } from '@/pages/entrenadores/types/error';
 
-// Iconos (Agregué FaEye)
+// Iconos
 import { 
   FaUserTie, FaSave, FaPen, FaArrowLeft, FaSwimmingPool, 
   FaPhoneAlt, FaIdCard, FaMapMarkerAlt, FaCheckCircle, 
@@ -89,10 +89,27 @@ const EntrenadorPerfil: React.FC = () => {
     loadData();
   }, [id]);
 
-  // Manejador de cambios genérico
+  // Manejador de cambios genérico con MAYÚSCULAS forzadas
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    let finalValue = value;
+
+    // Si es nombre o apellido, convertir a mayúsculas
+    if (name === 'nombre' || name === 'apellido') {
+        finalValue = value.toUpperCase();
+    }
+
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
+  };
+
+  // Manejador ESPECÍFICO para el teléfono (solo números)
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = e.target;
+      // Reemplazamos todo lo que NO sea número por vacío
+      const onlyNums = value.replace(/[^0-9]/g, '');
+      
+      setFormData(prev => ({ ...prev, simplePhone: onlyNums }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -228,7 +245,7 @@ const EntrenadorPerfil: React.FC = () => {
                   name="nombre"
                   disabled={!isEditing}
                   value={formData.nombre || ''}
-                  onChange={handleInputChange}
+                  onChange={handleInputChange} // Usa el manejador de mayúsculas
                   className={`w-full rounded-lg ${inputBaseClass}`}
                 />
               </div>
@@ -241,7 +258,7 @@ const EntrenadorPerfil: React.FC = () => {
                   name="apellido"
                   disabled={!isEditing}
                   value={formData.apellido || ''}
-                  onChange={handleInputChange}
+                  onChange={handleInputChange} // Usa el manejador de mayúsculas
                   className={`w-full rounded-lg ${inputBaseClass}`}
                 />
               </div>
@@ -274,7 +291,7 @@ const EntrenadorPerfil: React.FC = () => {
                         maxLength={7}
                         disabled={!isEditing}
                         value={formData.simplePhone || ''}
-                        onChange={handleInputChange}
+                        onChange={handlePhoneChange} // <--- USA EL MANEJADOR ESPECÍFICO
                         placeholder="1234567"
                         className={`w-full rounded-r-lg font-mono ${inputBaseClass}`}
                     />

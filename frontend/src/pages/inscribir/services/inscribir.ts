@@ -2,12 +2,21 @@ import { pb } from '@/lib/pb';
 import { ClientResponseError } from 'pocketbase';
 import type { IClass, IFormData } from '@/pages/inscribir/types';
 
-export const getClases = async (): Promise<IClass[]> => {
+// 1. Modificamos la función para recibir la edad (studentAge)
+export const getClases = async (studentAge: number): Promise<IClass[]> => {
   try {
+    // Validación de seguridad: si la edad no es válida o es 0, no traemos nada
+    // o podrías quitar este if si quieres traer todo cuando no hay edad.
+    if (studentAge === null || studentAge === undefined) return [];
+
     return await pb.collection('clases').getFullList<IClass>({
       sort: 'created',
+      // 2. Aplicamos el filtro: 
+      //    activo=true (Clase activa) Y 
+      //    edadMin <= studentAge (La edad mínima requerida es menor o igual a la edad del alumno)
+      filter: `activo=true && edadMin <= ${studentAge}`, 
       
-      expand: 'entrenador_id,clases_horarios(clase_id).horario_id', 
+      expand: 'entrenador_id,clases_horarios_via_clase_id.horario_id', 
     });
   } catch (error) {
     console.error("Error al cargar clases:", error);
@@ -16,14 +25,14 @@ export const getClases = async (): Promise<IClass[]> => {
 };
 
 export const saveInscription = async (formData: IFormData, age: number | null) => {
-  // 1. Validaciones Previas (Igual que antes)
+  // 1. Validaciones Previas
   if (age === null) throw new Error("La edad no ha sido calculada correctamente.");
   if (!formData.classId) throw new Error("Debe seleccionar un horario de clase.");
   if (!formData.paymentDate || !formData.coverageDate) {
     throw new Error("Debe indicar la Fecha de Pago y la Fecha de Cobertura.");
   }
 
-  // Lógica de variables (Igual que antes)
+  // Lógica de variables
   const isMinor = age < 18;
   const finalPhone = isMinor ? `${formData.repPhoneCode}-${formData.repPhoneNum}` : `${formData.phoneCode}-${formData.phoneNum}`;
   const finalCedula = `${formData.cedulaType}-${formData.cedulaNum}`;
@@ -31,10 +40,8 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
   const repCedula = `${formData.repCedulaType}-${formData.repCedulaNum}`;
 
   // VARIABLES DE CONTROL PARA ROLLBACK
-  // Aquí guardaremos los IDs si se crean exitosamente
   let createdAtletaId: string | null = null;
   let createdMatriculaId: string | null = null;
-  // No necesitamos createdPagoId porque es el último paso; si falla, no se crea.
 
   try {
     // --- PASO A: OBTENER DATOS DE LA CLASE ---
@@ -55,7 +62,7 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
     };
 
     const atleta = await pb.collection('atletas').create(atletaData);
-    createdAtletaId = atleta.id; // <--- GUARDAMOS EL ID DEL ÉXITO
+    createdAtletaId = atleta.id; 
 
     // --- PASO C: CREAR MATRÍCULA ---
     const matriculaData = {
@@ -66,7 +73,7 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
     };
 
     const matricula = await pb.collection('matriculas').create(matriculaData);
-    createdMatriculaId = matricula.id; // <--- GUARDAMOS EL ID DEL ÉXITO
+    createdMatriculaId = matricula.id; 
 
     // --- PASO D: REGISTRAR PAGO ---
     const pagoData = {
@@ -81,7 +88,6 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
     };
 
     const pago = await pb.collection('pagos').create(pagoData);
-    // Si llegamos aquí, todo fue un éxito.
 
     return {
       success: true,
@@ -93,26 +99,21 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
   } catch (error: unknown) {
     console.error("❌ Error en el proceso. Iniciando ROLLBACK...", error);
 
-    // --- LÓGICA DE ROLLBACK (Borrar lo creado) ---
-    // Ejecutamos esto en silencio para intentar limpiar la basura
+    // --- LÓGICA DE ROLLBACK ---
     try {
-      // 1. Si se creó la matrícula, la borramos
       if (createdMatriculaId) {
         await pb.collection('matriculas').delete(createdMatriculaId);
         console.log(`Rollback: Matrícula ${createdMatriculaId} eliminada.`);
       }
       
-      // 2. Si se creó el atleta, lo borramos
       if (createdAtletaId) {
         await pb.collection('atletas').delete(createdAtletaId);
         console.log(`Rollback: Atleta ${createdAtletaId} eliminado.`);
       }
     } catch (rollbackError) {
-      // Si falla el borrado, es grave (base de datos caída?), solo lo logueamos
       console.error("CRÍTICO: Falló el Rollback manual.", rollbackError);
     }
 
-    // --- MANEJO DEL ERROR ORIGINAL PARA EL USUARIO ---
     if (error instanceof ClientResponseError) {
       const details = error.response?.data ? JSON.stringify(error.response.data) : error.message;
       throw new Error(`Error al guardar: ${details}`);
