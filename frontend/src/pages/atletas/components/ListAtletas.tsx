@@ -19,7 +19,6 @@ const ListAtletas: React.FC = () => {
   const navigate = useNavigate();
   const [atletas, setAtletas] = useState<Atleta[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
@@ -28,7 +27,7 @@ const ListAtletas: React.FC = () => {
         const data = await getAtletas();
         setAtletas(data);
       } catch (err) {
-        setError(err instanceof AtletaError ? err.message : 'Error al conectar con la base de datos de natación.');
+        alert((err as AtletaError).message || 'Error al cargar atletas');
       } finally {
         setLoading(false);
       }
