@@ -18,41 +18,43 @@ import AtletaPerfil from "@/pages/atletas/components/AtletaPerfil";
 import AtletaMatricular from "@/pages/atletas/components/AtletaMatricular";
 
 export const router = createBrowserRouter([
-  { 
+  {
     path: "/login",
-    element: <LoginPage />, 
+    element: <LoginPage />,
   },
   {
 
-    element: <ProtectedAuth />, 
+    element: <ProtectedAuth />,
     path: "/",
     children: [
       {
         path: "/",
-        element: <DashboardLayout />, 
+        element: <DashboardLayout />,
         children: [
           { index: true, element: <DashboardPages /> },
-          { path: "atletas", element: <AtletasPages />,
+          {
+            path: "atletas", element: <AtletasPages />,
             children: [
-              {  element: <ListAtletas /> , index:true},
+              { element: <ListAtletas />, index: true },
               { path: "perfil/:id", element: <AtletaPerfil /> },
               { path: "matricular/:id", element: <AtletaMatricular /> },
-              {path: "*", element: <Navigate to="/atletas" replace />}
+              { path: "*", element: <Navigate to="/atletas" replace /> }
             ]
-           },
-          { path: "entrenadores", element: <EntrenadoresPages />,
-            children: [ 
-              {  element: <ListEntrenadores /> , index:true},
+          },
+          {
+            path: "entrenadores", element: <EntrenadoresPages />,
+            children: [
+              { element: <ListEntrenadores />, index: true },
               { path: "crear", element: <EntrenadoresForm /> },
               { path: "clases", element: <ListClases /> },
               { path: "horarios", element: <ClasesForm /> },
               { path: "perfil/:id", element: <EntrenadorPerfil /> },
               { path: "clases/:id", element: <ClasesDetails /> },
-              {path: "*", element: <Navigate to="/entrenadores" replace />}
+              { path: "*", element: <Navigate to="/entrenadores" replace /> }
             ]
           },
-          { path: "inscribir", element: <InscribirPages/> },
-        
+          { path: "inscribir", element: <InscribirPages /> },
+
         ]
       }
     ]
