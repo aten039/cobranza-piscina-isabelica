@@ -165,11 +165,12 @@ const EntrenadoresForm: React.FC = () => {
                    onChange={handleChange}
                    className={`${selectPrefixClass} w-20`} // Ajustado a w-20 para que quepan 4 dígitos bien
                >
-                   <option value="0412">0412</option>
-                   <option value="0414">0414</option>
-                   <option value="0424">0424</option>
-                   <option value="0416">0416</option>
-                   <option value="0426">0426</option>
+                        <option value="0422">0422</option>
+                        <option value="0412">0412</option>
+                        <option value="0414">0414</option>
+                        <option value="0424">0424</option>
+                        <option value="0416">0416</option>
+                        <option value="0426">0426</option>
                </select>
 
                {/* Input: Número restante */}

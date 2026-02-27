@@ -211,9 +211,9 @@ const AtletaMatricular: React.FC = () => {
                                     }}
                                     className="w-full p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
                                 >
-                                    <option value="" disabled>-- SELECCIONE UNA CLASE --</option>
+                                    <option value="" disabled className=' text-sm text-wrap'>-- SELECCIONE UNA CLASE --</option>
                                     {clasesFiltradas.map(clase => (
-                                        <option key={clase.id} value={clase.id}>{clase.nombre} (MIN: {clase.edadMin} AÑOS)</option>
+                                        <option key={clase.id} value={clase.id}>{clase.nombre} | {clase.expand?.entrenador_id?.nombre} | {clase.costo}$ (MIN: {clase.edadMin} salkfsakdksadkhaskjdhashdAÑOS)</option>
                                     ))}
                                 </select>
                             )}

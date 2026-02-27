@@ -5,7 +5,7 @@ import { GetClasesError } from "@/pages/entrenadores/types/error";
 export const getClasesByEntrenador = async (entrenadorId: string): Promise<Clase[]> => {
   try {
     const records = await pb.collection('clases').getFullList<Clase>({
-      filter: `entrenador_id = "${entrenadorId}"`,
+      filter: `entrenador_id = "${entrenadorId}" && activo = true`,
       sort: '-created', // Muestra primero las activas
     });
     return records;

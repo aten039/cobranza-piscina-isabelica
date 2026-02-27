@@ -80,8 +80,8 @@ export const RepresentativeForm: React.FC<RepProps> = ({ formData, handleChange 
               onChange={handleChange} 
               className="bg-white border border-orange-200 border-r-0 rounded-l-lg text-xs pl-2 py-2 outline-none text-gray-600"
             >
-              <option value="0412">0412</option>
-                        <option value="0422">0412</option>
+                        <option value="0422">0422</option>
+                        <option value="0412">0412</option>
                         <option value="0414">0414</option>
                         <option value="0424">0424</option>
                         <option value="0416">0416</option>

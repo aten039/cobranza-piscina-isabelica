@@ -187,7 +187,7 @@ const EntrenadorPerfil: React.FC = () => {
       {/* Botón Volver */}
       <button 
         onClick={() => navigate(-1)} 
-        className="mb-6 flex items-center text-slate-500 hover:text-blue-600 transition-colors font-medium"
+        className="mb-6 flex items-center cursor-pointer text-slate-500 hover:text-blue-600 transition-colors font-medium"
       >
         <FaArrowLeft className="mr-2" /> Volver al listado
       </button>
@@ -208,11 +208,11 @@ const EntrenadorPerfil: React.FC = () => {
         
         <div className="flex gap-2">
           {isEditing ? (
-             <button type="button" onClick={handleCancel} className="px-4 py-2 rounded-lg font-semibold flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm">
+             <button type="button" onClick={handleCancel} className=" cursor-pointer px-4 py-2 rounded-lg font-semibold flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white transition-all backdrop-blur-sm">
                <FaUndo /> Cancelar
              </button>
           ) : (
-            <button type="button" onClick={() => setIsEditing(true)} className="px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 shadow-md transition-all">
+            <button type="button" onClick={() => setIsEditing(true)} className="cursor-pointer px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 shadow-md transition-all">
               <FaPen className="text-sm" /> Editar Perfil
             </button>
           )}
@@ -278,8 +278,8 @@ const EntrenadorPerfil: React.FC = () => {
                         onChange={handleInputChange}
                         className={`w-28 pl-9 pr-2 rounded-l-lg border-r-0 cursor-pointer appearance-none ${inputBaseClass}`}
                     >
+                        <option value="0422">0422</option>
                         <option value="0412">0412</option>
-                        <option value="0422">0412</option>
                         <option value="0414">0414</option>
                         <option value="0424">0424</option>
                         <option value="0416">0416</option>
@@ -388,7 +388,7 @@ const EntrenadorPerfil: React.FC = () => {
                     {/* BOTÓN VER CLASE */}
                     <button 
                       onClick={() => navigate(`/entrenadores/clases/${clase.id}`)}
-                      className="flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors border border-blue-100 hover:border-blue-200"
+                      className="cursor-pointer flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors border border-blue-100 hover:border-blue-200"
                     >
                       <FaEye className="text-sm" /> Ver Clase
                     </button>
