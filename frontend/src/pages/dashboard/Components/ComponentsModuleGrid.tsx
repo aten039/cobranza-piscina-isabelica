@@ -14,7 +14,7 @@ export const ComponentsModuleGrid = () => {
 
     const modulos: DashboardModuleCard[] = [
         { id: 'atletas', titulo: 'Atletas', descripcion: 'Gestión y perfiles.', ruta: '/atletas', icono: FaSwimmer, colorFondo: 'bg-blue-50 hover:bg-blue-100 border-blue-200', colorIcono: 'text-blue-600' },
-        { id: 'pagos', titulo: 'Pagos', descripcion: 'Historial y facturas.', ruta: '/pagos', icono: FaMoneyBillWave, colorFondo: 'bg-green-50 hover:bg-green-100 border-green-200', colorIcono: 'text-green-600' },
+        { id: 'pagos', titulo: 'Pagos', descripcion: 'Historial y facturas.', ruta: '/recordPagos', icono: FaMoneyBillWave, colorFondo: 'bg-green-50 hover:bg-green-100 border-green-200', colorIcono: 'text-green-600' },
         { id: 'entrenadores', titulo: 'Entrenadores', descripcion: 'Nómina y datos.', ruta: '/entrenadores', icono: FaChalkboardTeacher, colorFondo: 'bg-purple-50 hover:bg-purple-100 border-purple-200', colorIcono: 'text-purple-600' },
         { id: 'deuda', titulo: 'Deuda', descripcion: 'Gestión de morosidad.', ruta: '/deuda', icono: FaFileInvoiceDollar, colorFondo: 'bg-rose-50 hover:bg-rose-100 border-rose-200', colorIcono: 'text-rose-600' },
         { id: 'clases', titulo: 'Clases', descripcion: 'Horarios y niveles.', ruta: '/entrenadores/clases', icono: FaCalendarAlt, colorFondo: 'bg-teal-50 hover:bg-teal-100 border-teal-200', colorIcono: 'text-teal-600' }

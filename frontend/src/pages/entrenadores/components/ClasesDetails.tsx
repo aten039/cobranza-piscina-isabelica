@@ -107,10 +107,20 @@ const ClaseDetails: React.FC = () => {
     loadAllData();
   }, [id]);
 
-  // --- Manejadores de Input ---
+ // --- Manejadores de Input ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    const finalValue = type === 'number' ? Number(value) : value;
+    
+    // Si es tipo número lo parseamos, si es el campo nombre lo pasamos a mayúsculas.
+    let finalValue: string | number = value;
+    
+    if (type === 'number') {
+        finalValue = Number(value);
+    } else if (name === 'nombre') {
+        // Obligamos a que el estado guarde el nombre en mayúsculas
+        finalValue = value.toUpperCase(); 
+    }
+
     setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
 

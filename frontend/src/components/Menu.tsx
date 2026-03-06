@@ -15,7 +15,8 @@ export default function Menu({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     { label: 'Atletas', icon: <MdGroups size={24} />, path: '/atletas' },
     { label: 'Inscribir', icon: <MdPersonAdd size={24} />, path: '/inscribir' },
     { label: 'Entrenadores', icon: <MdSportsKabaddi size={24} />, path: '/entrenadores' },
-    { label: 'Pagos', icon: <MdPayments size={24} />, path: '/pagos' },
+    { label: 'Pagos', icon: <MdPayments size={24} />, path: '/recordPagos' },
+    { label: 'Deudas', icon: <MdPayments size={24} />, path: '/deuda' },
   ];
 
   return (

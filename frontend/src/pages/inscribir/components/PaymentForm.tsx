@@ -72,7 +72,7 @@ export const PaymentForm: React.FC<PaymentProps> = ({ formData, setFormData, han
   }, [formData.paymentDate, setFormData]); 
 
 
-  const handleCurrencyChange = (currency: 'USD' | 'BS') => {
+  const handleCurrencyChange = (currency: 'BS' | 'USD') => {
     const defaultMethod = paymentOptions[currency][0].value;
     setFormData(prev => ({ 
       ...prev, 

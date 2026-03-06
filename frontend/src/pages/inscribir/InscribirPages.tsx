@@ -31,7 +31,7 @@ const InscribirPages: React.FC = () => {
     hasMedical: false, medicalDesc: '',
     classId: '', 
     // Valores por defecto para pagos
-    currency: 'USD', 
+    currency: 'BS', 
     paymentMethod: 'zelle', 
     paymentRef: '', paymentDate: new Date().toISOString().split('T')[0],
     coverageDate: '', paymentAmount: 0,

@@ -18,6 +18,11 @@ import AtletaPerfil from "@/pages/atletas/components/AtletaPerfil";
 import AtletaMatricular from "@/pages/atletas/components/AtletaMatricular";
 import PagosPages from "@/pages/pagos/PagosPages";
 import FormPayment from "@/pages/pagos/components/FormPayment";
+import { ListDeudas } from "@/pages/deudas/components/ListDeudas";
+import PagosRecordPages from "@/pages/historialPagos/PagosRecordPages";
+import PagosHistory from "@/pages/historialPagos/components/PagosHistory";
+import Liquidaciones from "@/pages/historialPagos/components/PagosLiquidaciones";
+import PagosDetails from "@/pages/historialPagos/components/PagosDetails";
 
 export const router = createBrowserRouter([
   { 
@@ -45,6 +50,20 @@ export const router = createBrowserRouter([
           { path: "pagos", element: <PagosPages />,
             children: [
               { path: "atleta/:id", element: <FormPayment /> },
+              {path: "*", element: <Navigate to="/" replace />}
+            ]
+           },
+          { path: "recordPagos", element: <PagosRecordPages />,
+            children: [
+              {  element: <PagosHistory /> , index:true},
+              { path: "details/:id", element: <PagosDetails /> },
+              { path: "liquidaciones", element: <Liquidaciones /> },
+              {path: "*", element: <Navigate to="/" replace />}
+            ]
+           },
+          { path: "deuda", element: <PagosPages />,
+            children: [
+              {  element: <ListDeudas /> , index:true},
               {path: "*", element: <Navigate to="/" replace />}
             ]
            },
