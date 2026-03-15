@@ -32,13 +32,26 @@ export default function PagosRecordPages() {
           className={({ isActive }) =>
             `flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 ${
               isActive
-                ? "bg-emerald-600 text-white shadow-md border-b-4 border-emerald-800 translate-y-px"
+                ? "bg-orange-600 text-white shadow-md border-b-4 border-emerald-800 translate-y-px"
                 : "bg-white text-slate-500 border border-slate-200 border-b-0 hover:bg-slate-100 hover:text-slate-700"
             }`
           }
         >
           <FiDollarSign size={16} />
           Pendientes por Liquidar
+        </NavLink>
+        <NavLink
+          to="/recordPagos/liqhistory"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 ${
+              isActive
+                ? "bg-emerald-600 text-white shadow-md border-b-4 border-emerald-800 translate-y-px"
+                : "bg-white text-slate-500 border border-slate-200 border-b-0 hover:bg-slate-100 hover:text-slate-700"
+            }`
+          }
+        >
+          <FiClock size={16} />
+          Histórico de Liquidaciones
         </NavLink>
       </nav>
 

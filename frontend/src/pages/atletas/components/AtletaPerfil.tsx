@@ -200,6 +200,7 @@ const AtletaPerfil: React.FC = () => {
     }
   };
 
+  // --- MODIFICADO: Actualiza el estado del atleta si este fue desactivado por el servicio ---
   const handleDeleteMatricula = async (e: React.MouseEvent, matId: string) => {
     e.stopPropagation(); 
     if (!window.confirm("¿ADVERTENCIA: Estás seguro de eliminar permanentemente esta matrícula del historial? Esta acción no se puede deshacer.")) return;
@@ -207,7 +208,21 @@ const AtletaPerfil: React.FC = () => {
     setProcessingMatriculaId(matId);
     try {
         await deleteMatricula(matId);
+        
+        // 1. Removemos la matrícula de la UI actual
         setMatriculas(prev => prev.filter(m => m.id !== matId));
+        
+        // 2. Verificamos silenciosamente si el atleta fue desactivado en backend
+        if (id) {
+            const atletaActualizado = await getAtletaById(id);
+            setAtleta(atletaActualizado);
+            
+            // Si el atleta pasó a inactivo, opcionalmente movemos la vista a "inactivas"
+            if (!atletaActualizado.activo && atleta?.activo) {
+                setTabMatriculasActivas(false);
+            }
+        }
+
         setSuccessMsg("Matrícula eliminada correctamente.");
         setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err) {

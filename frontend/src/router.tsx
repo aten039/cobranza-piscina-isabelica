@@ -23,6 +23,8 @@ import PagosRecordPages from "@/pages/historialPagos/PagosRecordPages";
 import PagosHistory from "@/pages/historialPagos/components/PagosHistory";
 import Liquidaciones from "@/pages/historialPagos/components/PagosLiquidaciones";
 import PagosDetails from "@/pages/historialPagos/components/PagosDetails";
+import LiquidacionesHistory from "@/pages/historialPagos/components/LiquidacionesHistory";
+import LiquidacionDetails from "@/pages/historialPagos/components/LiquidacionDetails";
 
 export const router = createBrowserRouter([
   { 
@@ -58,6 +60,8 @@ export const router = createBrowserRouter([
               {  element: <PagosHistory /> , index:true},
               { path: "details/:id", element: <PagosDetails /> },
               { path: "liquidaciones", element: <Liquidaciones /> },
+              { path: "liq/details/:id", element: <LiquidacionDetails /> },
+              { path: "liqhistory", element: <LiquidacionesHistory /> },
               {path: "*", element: <Navigate to="/" replace />}
             ]
            },

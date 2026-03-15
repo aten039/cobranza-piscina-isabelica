@@ -88,8 +88,55 @@ export interface PagoHistorial extends RecordModel {
   };
 }
 
+
+export const PAYMENT_OPTIONS = {
+  BS: [
+    { value: 'pago_movil', label: 'Pago Móvil' },
+    { value: 'transferencia', label: 'Transferencia Bancaria' },
+    { value: 'efectivo', label: 'Efectivo (Bs)' },
+    { value: 'punto', label: 'Punto de Venta' }
+  ],
+  USD: [
+    { value: 'zelle', label: 'Zelle' },
+    { value: 'efectivo', label: 'Efectivo ($)' },
+    { value: 'binance', label: 'Binance / USDT' },
+    { value: 'transferencia_int', label: 'Transferencia Intl.' }
+  ]
+} as const;
+
 export interface CreateLiquidacionDTO {
   entrenador_id: string;
   monto: number;
   referencia: string;
+  type: 'USD' | 'BS';
+  metodo: string;
+  fecha_pago: string;
+}
+
+
+export interface LiquidacionHistorial extends RecordModel {
+  id: string;
+  entrenador_id: string;
+  monto: number;
+  referencia: string;
+  type: 'USD' | 'BS';
+  metodo: string;
+  fecha_pago: string;
+  expand?: {
+    entrenador_id?: EntrenadorInfo;
+  };
+}
+
+export interface FiltrosLiquidacion {
+  fechaInicio: string;
+  fechaFin: string;
+  profesorId: string;
+  searchTerm: string;
+  page: number;
+  perPage: number;
+}
+
+export interface LiquidacionConPagos {
+  liquidacion: LiquidacionHistorial;
+  pagosAsociados: PagoHistorial[];
 }

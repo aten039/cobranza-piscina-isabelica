@@ -131,7 +131,7 @@ export default function PagoDetails() {
       <div className="flex items-center gap-4 mb-2">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-full transition-colors"
+          className="cursor-pointer p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-full transition-colors"
           title="Volver atrás"
         >
           <FiArrowLeft size={20} />

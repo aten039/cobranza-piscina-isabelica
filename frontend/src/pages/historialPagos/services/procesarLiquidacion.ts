@@ -1,3 +1,5 @@
+// ARCHIVO: src/pages/historialPagos/services/procesarLiquidacion.ts
+
 import { pb } from "@/lib/pb";
 import type { CreateLiquidacionDTO } from "@/pages/historialPagos/types";
 import { CrearLiquidacionError } from "@/pages/historialPagos/types/error";
@@ -7,7 +9,8 @@ export const procesarLiquidacion = async (
   pagosIds: string[]
 ): Promise<boolean> => {
   try {
-    // 1. Creamos el registro en la tabla 'liquidaciones'
+    // 1. Creamos el registro en la tabla 'liquidaciones' incluyendo fecha_pago
+    // PocketBase acepta nativamente el formato YYYY-MM-DD para campos Date
     const nuevaLiquidacion = await pb.collection('liquidaciones').create(datosLiquidacion);
 
     // 2. Actualizamos todos los pagos para asignarles el ID de esta liquidación
@@ -15,12 +18,12 @@ export const procesarLiquidacion = async (
       pb.collection('pagos').update(id, { liquidacion_id: nuevaLiquidacion.id })
     );
 
-    // Ejecutamos todas las actualizaciones en paralelo
+    // Ejecutamos en paralelo
     await Promise.all(promesasActualizacion);
 
     return true;
   } catch (error) {
     console.error("[Service Error] procesarLiquidacion:", error);
-    throw new CrearLiquidacionError("Ocurrió un error al procesar la liquidación. Intente nuevamente.");
+    throw new CrearLiquidacionError("Ocurrió un error al procesar la liquidación. Verifique la conexión o los datos e intente nuevamente.");
   }
 };

@@ -1,11 +1,20 @@
+// ARCHIVO: src/pages/historialPagos/PagosLiquidaciones.tsx
+
 import { getClasesOptions } from "@/pages/historialPagos/services/getClasesOption";
 import { getHistorialPagos } from "@/pages/historialPagos/services/getHistorialPagos";
 import { getProfesoresOptions } from "@/pages/historialPagos/services/getProfesoresOption";
 import { procesarLiquidacion } from "@/pages/historialPagos/services/procesarLiquidacion";
-import type { ClaseOpcion, FiltrosHistorial, PagoHistorial, ProfesorOpcion } from "@/pages/historialPagos/types";
+import { 
+  PAYMENT_OPTIONS, // <-- Nueva importación de la estructura
+  type ClaseOpcion, 
+  type FiltrosHistorial, 
+  type PagoHistorial, 
+  type ProfesorOpcion 
+} from "@/pages/historialPagos/types";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { FiChevronLeft, FiChevronRight, FiFilter, FiRefreshCcw, FiAlertCircle, FiDollarSign, FiX, FiCheckCircle } from "react-icons/fi";
 
+// --- Helpers ---
 const getTodayString = () => new Date().toISOString().split("T")[0];
 const getLastMonthString = () => {
   const date = new Date();
@@ -18,13 +27,14 @@ const formatMoneda = (monto: number, moneda: 'USD' | 'BS') => {
   return new Intl.NumberFormat("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(monto) + " Bs";
 };
 
+// Actualizado para buscar en la nueva estructura anidada
 const formatMetodo = (metodo: string) => {
   if (!metodo) return "N/A";
-  const map: Record<string, string> = {
-    'pago_movil': 'Pago Móvil', 'transferencia': 'Transferencia', 'efectivo': 'Efectivo',
-    'punto': 'Punto de Venta', 'zelle': 'Zelle', 'binance': 'Binance', 'transferencia_int': 'Transferencia Intl.'
-  };
-  return map[metodo] || metodo.replace(/_/g, ' ').toUpperCase();
+  const opBS = PAYMENT_OPTIONS.BS.find(m => m.value === metodo);
+  if (opBS) return opBS.label;
+  const opUSD = PAYMENT_OPTIONS.USD.find(m => m.value === metodo);
+  if (opUSD) return opUSD.label;
+  return metodo.replace(/_/g, ' ').toUpperCase();
 };
 
 export default function PagosLiquidaciones() {
@@ -43,8 +53,22 @@ export default function PagosLiquidaciones() {
   // Estados del Modal de Liquidación
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formLiq, setFormLiq] = useState({ monto: "", referencia: "", metodo: "", type: "BS" });
   const [exitoMsg, setExitoMsg] = useState<string | null>(null);
+  
+  // Tipamos explícitamente el estado del formulario para que coincida con las llaves del objeto
+  const [formLiq, setFormLiq] = useState<{
+    monto: string;
+    referencia: string;
+    metodo: string;
+    type: 'USD' | 'BS';
+    fecha_pago: string;
+  }>({ 
+    monto: "", 
+    referencia: "", 
+    metodo: "", 
+    type: "BS",
+    fecha_pago: getTodayString() 
+  });
 
   const defaultFiltros: FiltrosHistorial = {
     fechaInicio: getLastMonthString(),
@@ -61,8 +85,8 @@ export default function PagosLiquidaciones() {
   const [totalPages, setTotalPages] = useState<number>(1);
 
   useEffect(() => {
-    getClasesOptions().then(setClasesOpciones);
-    getProfesoresOptions().then(setProfesoresOpciones);
+    getClasesOptions().then(setClasesOpciones).catch(() => {});
+    getProfesoresOptions().then(setProfesoresOpciones).catch(() => {});
   }, []);
 
   const fetchPagos = useCallback(async () => {
@@ -83,7 +107,6 @@ export default function PagosLiquidaciones() {
     fetchPagos();
   }, [fetchPagos]);
 
-  // Limpieza automática de alertas
   useEffect(() => {
     if (alerta) {
       const timer = setTimeout(() => setAlerta(null), 4000);
@@ -98,19 +121,23 @@ export default function PagosLiquidaciones() {
     }
   }, [exitoMsg]);
 
-  // --- CÁLCULOS DINÁMICOS DE TOTALES ---
+  // --- CÁLCULOS DINÁMICOS CORREGIDOS ---
   const { totalUSD, totalBS } = useMemo(() => {
     let usd = 0;
     let bs = 0;
     pagos.forEach(pago => {
       if (selectedPagos.has(pago.id)) {
-        if (pago.type === 'USD') usd += pago.monto;
-        if (pago.type === 'BS') bs += pago.monto;
+        const montoNumerico = Number(pago.monto) || 0; 
+        const monedaSegura = pago.type?.toUpperCase(); 
+
+        if (monedaSegura === 'USD') usd += montoNumerico;
+        else if (monedaSegura === 'BS') bs += montoNumerico;
       }
     });
     return { totalUSD: usd, totalBS: bs };
   }, [pagos, selectedPagos]);
 
+  // --- Handlers ---
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
     setFiltros((prev) => ({ ...prev, [name]: value, page: 1 }));
@@ -124,6 +151,8 @@ export default function PagosLiquidaciones() {
 
   const handleLimpiarFiltros = () => {
     setFiltros(defaultFiltros);
+    setSelectedPagos(new Set());
+    setSelectedProfesorId(null);
   };
 
   const handleTogglePago = (pagoId: string, profesorId: string) => {
@@ -141,6 +170,10 @@ export default function PagosLiquidaciones() {
       newSelection.add(pagoId);
       setSelectedPagos(newSelection);
       setSelectedProfesorId(profesorId);
+      
+      if (filtros.profesorId !== profesorId) {
+        setFiltros(prev => ({ ...prev, profesorId, page: 1 }));
+      }
     }
   };
 
@@ -174,13 +207,22 @@ export default function PagosLiquidaciones() {
       pagos.forEach(p => newSelection.add(p.id));
       setSelectedPagos(newSelection);
       setSelectedProfesorId(profesorIdEnPantalla);
+
+      if (filtros.profesorId !== profesorIdEnPantalla) {
+        setFiltros(prev => ({ ...prev, profesorId: profesorIdEnPantalla, page: 1 }));
+      }
     }
   };
 
-  // --- LÓGICA DEL MODAL ---
   const handleAbrirModal = () => {
     if (selectedProfesorId && selectedPagos.size > 0) {
-      setFormLiq({ monto: "", referencia: "" , metodo: "", type: "BS" });
+      setFormLiq({ 
+        monto: "", 
+        referencia: "", 
+        metodo: "pago_movil", 
+        type: "BS",
+        fecha_pago: getTodayString() 
+      });
       setIsModalOpen(true);
     }
   };
@@ -188,8 +230,14 @@ export default function PagosLiquidaciones() {
   const handleSubmitLiquidacion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProfesorId || selectedPagos.size === 0) return;
-    if (!formLiq.monto || !formLiq.referencia) {
-      setAlerta("Debe llenar todos los campos.");
+    
+    if (!formLiq.monto || !formLiq.metodo || !formLiq.fecha_pago) {
+      setAlerta("Debe llenar todos los campos obligatorios, incluyendo la fecha.");
+      return;
+    }
+
+    if (formLiq.metodo !== 'efectivo' && !formLiq.referencia) {
+      setAlerta("La referencia es obligatoria para este método de pago.");
       return;
     }
 
@@ -199,7 +247,10 @@ export default function PagosLiquidaciones() {
         {
           entrenador_id: selectedProfesorId,
           monto: Number(formLiq.monto),
-          referencia: formLiq.referencia,
+          referencia: formLiq.metodo === 'efectivo' ? 'EFECTIVO' : formLiq.referencia,
+          type: formLiq.type,
+          metodo: formLiq.metodo,
+          fecha_pago: formLiq.fecha_pago
         },
         Array.from(selectedPagos)
       );
@@ -208,7 +259,7 @@ export default function PagosLiquidaciones() {
       setExitoMsg(`Se liquidaron ${selectedPagos.size} pagos correctamente.`);
       setSelectedPagos(new Set());
       setSelectedProfesorId(null);
-      fetchPagos(); // Refresca la tabla, los liquidados ya no saldrán
+      fetchPagos(); 
     } catch (err) {
       setAlerta(err instanceof Error ? err.message : "Error al procesar.");
     } finally {
@@ -242,14 +293,13 @@ export default function PagosLiquidaciones() {
                 <FiDollarSign className="text-emerald-600" />
                 Procesar Liquidación
               </h3>
-              <button onClick={() => !isSubmitting && setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+              <button onClick={() => !isSubmitting && setIsModalOpen(false)} className="cursor-pointer text-slate-400 hover:text-slate-700 transition-colors">
                 <FiX size={24} />
               </button>
             </div>
             
             <form onSubmit={handleSubmitLiquidacion} className="p-6 space-y-5">
               
-              {/* Resumen del Profesor */}
               <div className="text-center mb-4">
                 <p className="text-sm text-slate-500">Liquidación para:</p>
                 <p className="font-bold text-xl text-slate-800">
@@ -258,7 +308,6 @@ export default function PagosLiquidaciones() {
                 <p className="text-xs text-slate-400 font-mono mt-1">{selectedPagos.size} pagos seleccionados</p>
               </div>
 
-              {/* Cálculos Dinámicos de Recaudación */}
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Resumen Recaudado</p>
                 <div className="flex justify-between items-center">
@@ -271,26 +320,88 @@ export default function PagosLiquidaciones() {
                 </div>
               </div>
 
-              {/* Formulario a guardar */}
               <div className="space-y-4 pt-2">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Monto Final Pagado (Comisión)</label>
-                  <input
-                    type="number" step="0.01" min="0" required disabled={isSubmitting}
-                    value={formLiq.monto} onChange={(e) => setFormLiq({...formLiq, monto: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
-                    placeholder="Ej: 50.00"
-                  />
-                  <p className="text-[11px] text-slate-400">Introduce el monto real que transferiste al profesor.</p>
+                
+                {/* Monto y Moneda */}
+                <div className="flex gap-3">
+                  <div className="space-y-1.5 flex-[2]">
+                    <label className="text-sm font-medium text-slate-700">Monto Final a Liquidar</label>
+                    <input
+                      type="number" step="0.01" min="0" required disabled={isSubmitting}
+                      value={formLiq.monto} onChange={(e) => setFormLiq({...formLiq, monto: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium disabled:bg-slate-50 disabled:cursor-not-allowed"
+                      placeholder="Ej: 50.00"
+                    />
+                  </div>
+                  <div className="space-y-1.5 flex-[1]">
+                    <label className="text-sm font-medium text-slate-700">Moneda</label>
+                    <select
+                      value={formLiq.type} 
+                      onChange={(e) => {
+                        const nuevaMoneda = e.target.value as 'USD' | 'BS';
+                        // Reseteo Inteligente: Borramos el método y la ref porque cambiaron las opciones disponibles
+                        setFormLiq({
+                          ...formLiq, 
+                          type: nuevaMoneda,
+                          metodo: "", 
+                          referencia: "" 
+                        });
+                      }}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium bg-white disabled:bg-slate-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="BS">BS</option>
+                    </select>
+                  </div>
                 </div>
 
+                {/* Fecha y Método Dinámico */}
+                <div className="flex gap-3">
+                  <div className="space-y-1.5 flex-[1]">
+                    <label className="text-sm font-medium text-slate-700">Fecha</label>
+                    <input
+                      type="date" required disabled={isSubmitting}
+                      value={formLiq.fecha_pago} 
+                      onChange={(e) => setFormLiq({...formLiq, fecha_pago: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-sm bg-white disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                  
+                  <div className="space-y-1.5 flex-[2]">
+                    <label className="text-sm font-medium text-slate-700">Método de Pago</label>
+                    <select
+                      required disabled={isSubmitting}
+                      value={formLiq.metodo} 
+                      onChange={(e) => {
+                        const isEfectivo = e.target.value === 'efectivo';
+                        setFormLiq({...formLiq, metodo: e.target.value, referencia: isEfectivo ? '' : formLiq.referencia});
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white disabled:bg-slate-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <option value="" disabled>Seleccione método</option>
+                      {/* Generación dinámica basada en la moneda seleccionada */}
+                      {PAYMENT_OPTIONS[formLiq.type].map(opcion => (
+                        <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Referencia */}
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Referencia de la Transferencia</label>
+                  <label className="text-sm font-medium text-slate-700">
+                    Referencia de la Transferencia
+                    {formLiq.metodo === 'efectivo' && <span className="text-slate-400 font-normal ml-2">(No requerida)</span>}
+                  </label>
                   <input
-                    type="text" required disabled={isSubmitting}
-                    value={formLiq.referencia} onChange={(e) => setFormLiq({...formLiq, referencia: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm uppercase"
-                    placeholder="Ej: ZELLE-12345"
+                    type="text" 
+                    required={formLiq.metodo !== 'efectivo'} 
+                    disabled={isSubmitting || formLiq.metodo === 'efectivo'}
+                    value={formLiq.referencia} 
+                    onChange={(e) => setFormLiq({...formLiq, referencia: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm uppercase disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
+                    placeholder={formLiq.metodo === 'efectivo' ? "N/A" : "Ej: ZELLE-12345"}
                   />
                 </div>
               </div>
@@ -299,13 +410,13 @@ export default function PagosLiquidaciones() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button" onClick={() => !isSubmitting && setIsModalOpen(false)} disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                  className="cursor-pointer flex-1 px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit" disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-70 flex justify-center items-center"
+                  className="cursor-pointer flex-1 px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
                 >
                   {isSubmitting ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : "Liquidar Ahora"}
                 </button>
@@ -340,7 +451,7 @@ export default function PagosLiquidaciones() {
               {profesoresOpciones.map(p => <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>)}
             </select>
           </div>
-          <button onClick={handleLimpiarFiltros} className="h-9 px-3 flex items-center gap-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-md hover:bg-slate-200 transition-colors">
+          <button onClick={handleLimpiarFiltros} className="cursor-pointer h-9 px-3 flex items-center gap-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-md hover:bg-slate-200 transition-colors">
             <FiRefreshCcw /> <span className="hidden xl:inline">Limpiar</span>
           </button>
         </div>
@@ -435,8 +546,8 @@ export default function PagosLiquidaciones() {
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
             <span className="text-sm text-slate-500">Página {filtros.page} de {totalPages}</span>
             <div className="flex gap-1">
-              <button onClick={() => handlePageChange(filtros.page - 1)} disabled={filtros.page === 1} className="p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-colors"><FiChevronLeft size={16} /></button>
-              <button onClick={() => handlePageChange(filtros.page + 1)} disabled={filtros.page === totalPages} className="p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition-colors"><FiChevronRight size={16} /></button>
+              <button onClick={() => handlePageChange(filtros.page - 1)} disabled={filtros.page === 1} className="cursor-pointer p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><FiChevronLeft size={16} /></button>
+              <button onClick={() => handlePageChange(filtros.page + 1)} disabled={filtros.page === totalPages} className="cursor-pointer p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><FiChevronRight size={16} /></button>
             </div>
           </div>
         )}

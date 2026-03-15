@@ -61,7 +61,7 @@ const ClasesForm: React.FC = () => {
     return `${hora < 10 ? '0' + hora : hora}:00`;
   });
 
-  const diasSemana = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
+  const diasSemana = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADOS", "DOMINGO"];
 
   // Manejador de cambios unificado
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

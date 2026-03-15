@@ -68,7 +68,7 @@ const AtletaMatricular: React.FC = () => {
         setLoading(true);
         const [atletaData, clasesData, matriculasData] = await Promise.all([
           getAtletaById(id),
-          getClasesDisponibles(),
+          getClasesDisponibles(id),
           getMatriculasByAtleta(id)
         ]);
 
