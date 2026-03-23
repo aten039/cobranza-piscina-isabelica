@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-// Tipos
-import type { ClaseFull, Entrenador } from '@/pages/entrenadores/types';
-// Asegúrate de exportar VistaClaseAlumno en tus types
-import type { VistaClaseAlumno } from '@/pages/entrenadores/types'; 
+// Tipos (¡Asegúrate de exportar ClaseFormState desde tu archivo de tipos!)
+import type { ClaseFull, Entrenador, ClaseFormState, VistaClaseAlumno } from '@/pages/entrenadores/types';
 
 // Servicios de Lectura
-
 import { getClaseDetails } from '@/pages/entrenadores/services/getClasesDetails';
+import { getEntrenadoresActive } from '@/pages/entrenadores/services/getEntrenadoresActive';
 
 // Servicios de Mutación
 import { syncHorarios, type SimpleHorario } from '@/pages/entrenadores/services/syncHorarios';
@@ -26,7 +24,6 @@ import {
   FaBan
 } from 'react-icons/fa';
 import { MdAddCircle, MdDeleteOutline } from "react-icons/md";
-import { getEntrenadoresActive } from '@/pages/entrenadores/services/getEntrenadoresActive';
 
 const ClaseDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,10 +31,9 @@ const ClaseDetails: React.FC = () => {
 
   // --- Estados de Datos ---
   const [clase, setClase] = useState<ClaseFull | null>(null);
-  const [matriculas, setMatriculas] = useState<VistaClaseAlumno[]>([]); // AHORA USA LA VISTA SQL
+  const [matriculas, setMatriculas] = useState<VistaClaseAlumno[]>([]); 
   const [allEntrenadores, setAllEntrenadores] = useState<Entrenador[]>([]);
   
-  // Estado local para manejar los horarios en la UI (Lista simple)
   const [scheduleList, setScheduleList] = useState<SimpleHorario[]>([]);
 
   // --- Estados de UI ---
@@ -49,14 +45,12 @@ const ClaseDetails: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [warningMsg, setWarningMsg] = useState<string | null>(null);
 
-  // --- Estados para el Formulario ---
-  const [formData, setFormData] = useState<Partial<ClaseFull>>({});
+  // --- Estado del Formulario usando el tipo estricto importado ---
+  const [formData, setFormData] = useState<ClaseFormState>({});
 
-  // Estados temporales para agregar nuevos horarios
   const [tempDia, setTempDia] = useState('LUNES');
   const [tempHora, setTempHora] = useState('06:00');
 
-  // Constantes para selectores
   const diasSemana = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADOS", "DOMINGO"];
   const bloquesHora = Array.from({ length: 17 }, (_, i) => {
     const hora = i + 6;
@@ -76,7 +70,7 @@ const ClaseDetails: React.FC = () => {
         ]);
         
         setClase(details.clase);
-        setMatriculas(details.matriculas); // Recibe la lista aplanada de la Vista SQL
+        setMatriculas(details.matriculas); 
         setAllEntrenadores(entrenadoresList);
 
         const simpleHorarios = details.horarios.map(h => ({
@@ -107,24 +101,45 @@ const ClaseDetails: React.FC = () => {
     loadAllData();
   }, [id]);
 
- // --- Manejadores de Input ---
+  // --- Manejadores de Input ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     
-    // Si es tipo número lo parseamos, si es el campo nombre lo pasamos a mayúsculas.
-    let finalValue: string | number = value;
+    // Validación estricta para Costo y Edad Mínima (SOLO números enteros)
+    if (name === 'costo' || name === 'edadMin') {
+        const regexEntero = /^[0-9]*$/;
+        // Solo permite actualizar si está vacío o si son puros números (bloquea negativos, puntos y letras)
+        if (value === '' || regexEntero.test(value)) {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+        return;
+    } 
     
-    if (type === 'number') {
-        finalValue = Number(value);
-    } else if (name === 'nombre') {
-        // Obligamos a que el estado guarde el nombre en mayúsculas
-        finalValue = value.toUpperCase(); 
+    if (name === 'nombre') {
+        setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
+        return;
     }
 
-    setFormData(prev => ({ ...prev, [name]: finalValue }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // --- Gestión de Horarios (UI Local) ---
+  // --- Limpieza Mágica al Terminar de Escribir (onBlur) ---
+  const handleNumberBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      
+      if (value === '') {
+          setFormData(prev => ({ ...prev, [name]: undefined }));
+          return;
+      }
+
+      // Elimina ceros a la izquierda (Ej: "03" se vuelve el número matemático 3)
+      const parsedNum = Number(value);
+      if (!isNaN(parsedNum)) {
+          setFormData(prev => ({ ...prev, [name]: parsedNum }));
+      }
+  };
+
+  // --- Gestión de Horarios ---
   const addHorario = () => {
     const existe = scheduleList.find(h => h.dia === tempDia && h.hora === tempHora);
     if (existe) return; 
@@ -148,11 +163,26 @@ const ClaseDetails: React.FC = () => {
       setSuccessMsg(null);
       setWarningMsg(null);
 
-      const updatedClase = await updateClase(id, formData);
+      // Si quedaron campos vacíos (undefined), forzamos a 0. Number() garantiza el tipo estricto.
+      const payloadToSave = {
+          ...formData,
+          costo: Number(formData.costo ?? 0),
+          edadMin: Number(formData.edadMin ?? 0)
+      };
+
+      const updatedClase = await updateClase(id, payloadToSave);
       
       if (clase) {
         setClase(prev => prev ? ({ ...prev, ...updatedClase }) : null);
       }
+
+      // SINCRONIZACIÓN INMEDIATA: Forzamos a que el input muestre lo que guardó la BD (Ej: el 0)
+      setFormData({
+        nombre: updatedClase.nombre,
+        costo: updatedClase.costo,
+        edadMin: updatedClase.edadMin,
+        entrenador_id: updatedClase.entrenador_id,
+      });
 
       try {
         await syncHorarios(id, scheduleList);
@@ -177,7 +207,7 @@ const ClaseDetails: React.FC = () => {
     }
   };
 
-  // --- 3. Eliminar Clase (Soft Delete) ---
+  // --- 3. Eliminar Clase ---
   const handleDeleteClass = async () => {
       const confirmacion = window.confirm(
           "⚠️ ¿Estás seguro que deseas eliminar esta clase?\n\nAl hacerlo, se inactivará permanentemente y todas las matrículas asociadas serán dadas de baja."
@@ -214,7 +244,6 @@ const ClaseDetails: React.FC = () => {
 
   if (!clase) return <div className="p-8 text-center">Clase no encontrada</div>;
 
-  // CONDICIÓN: Verificar si la clase está inactiva/eliminada
   const isDeleted = !clase.activo;
 
   const inputClass = `w-full p-2.5 rounded-lg border transition-all outline-none text-sm ${
@@ -261,7 +290,6 @@ const ClaseDetails: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
-           {/* Solo mostramos los botones de edición si la clase está ACTIVA */}
            {!isDeleted && (
                isEditing ? (
                  <button onClick={handleCancel} className="cursor-pointer px-4 py-2 rounded-lg font-semibold flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all text-sm">
@@ -276,18 +304,15 @@ const ClaseDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Contenido Principal (Filtro oscuro si está eliminada) */}
       <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all ${isDeleted ? 'opacity-90 grayscale-[0.5]' : ''}`}>
 
         {/* COLUMNA IZQUIERDA: Formulario y Horarios */}
         <div className="lg:col-span-1 space-y-6 relative">
           
-          {/* Overlay protector si está eliminado */}
           {isDeleted && (
             <div className="absolute inset-0 z-10 cursor-not-allowed"></div>
           )}
 
-          {/* Tarjeta 1: Datos Básicos */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-50 pb-2">
               <FaPen className="text-blue-500 text-sm" /> Detalles de la Clase
@@ -313,28 +338,32 @@ const ClaseDetails: React.FC = () => {
                 />
               </div>
 
+              {/* INPUTS DE NÚMEROS REFACTORIZADOS (Sin decimales) */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}><FaMoneyBillWave className="inline mr-1"/> Costo ($)</label>
                   <input
-                    type="number"
+                    type="text" 
+                    inputMode="numeric" 
                     name="costo"
                     disabled={!isEditing}
-                    value={formData.costo || 0}
+                    value={formData.costo ?? ''}
                     onChange={handleInputChange}
+                    onBlur={handleNumberBlur}
                     className={`${inputClass} font-mono`}
                   />
                 </div>
                 <div>
                   <label className={labelClass}><FaChild className="inline mr-1"/> Edad Min.</label>
                   <input
-                    maxLength={50}
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     name="edadMin"
                     disabled={!isEditing}
-                    value={formData.edadMin || 0}
+                    value={formData.edadMin ?? ''}
                     onChange={handleInputChange}
-                    className={inputClass}
+                    onBlur={handleNumberBlur}
+                    className={`${inputClass} font-mono`}
                   />
                 </div>
               </div>
@@ -346,12 +375,12 @@ const ClaseDetails: React.FC = () => {
                   disabled={!isEditing}
                   value={formData.entrenador_id || ''}
                   onChange={handleInputChange}
-                  className={`${inputClass} uppercase`}
+                  className={`${inputClass} uppercase cursor-pointer`}
                 >
                   <option value="">Seleccione...</option>
                   {allEntrenadores.map(ent => (
                     <option key={ent.id} value={ent.id}>
-                      {ent.nombre} {ent.apellido}
+                      {ent.nombre} {ent.apellido} - CI: {ent.cedula}
                     </option>
                   ))}
                 </select>
@@ -439,7 +468,6 @@ const ClaseDetails: React.FC = () => {
             </button>
           )}
 
-          {/* Ocultamos el botón de eliminar si ya está eliminada */}
           {!isEditing && !isDeleted && (
               <div className="mt-8 pt-8 border-t border-slate-100">
                   <button 
@@ -486,17 +514,12 @@ const ClaseDetails: React.FC = () => {
                   <tbody className="divide-y divide-slate-50">
                     {matriculas.map((row) => {
                       
-                      // Validación de Fecha de Cobertura
                       const hasCobertura = !!row.cobertura_hasta;
-                      
-                      // Importante: parsear la fecha de forma segura (asumiendo formato ISO YYYY-MM-DD)
                       let isExpired = true;
                       let formattedDate = "";
                       
                       if (hasCobertura) {
-                          // Se añade "T00:00:00" para evitar problemas de zona horaria (UTC -> Local)
                           const coberturaDate = new Date(row.cobertura_hasta!.split(' ')[0] + "T00:00:00");
-                          // Normalizar fecha de hoy (sin horas) para comparación justa
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
                           

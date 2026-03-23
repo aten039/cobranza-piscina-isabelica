@@ -6,18 +6,17 @@ import {
   UpdateEntrenadorError 
 } from '@/pages/entrenadores/types/error';
 
-// Iconos
+// Iconos (Añadido FaPlus)
 import { 
   FaUserTie, FaSave, FaPen, FaArrowLeft, FaSwimmingPool, 
   FaPhoneAlt, FaIdCard, FaMapMarkerAlt, FaCheckCircle, 
-  FaTimesCircle, FaSpinner, FaUndo, FaEye 
+  FaTimesCircle, FaSpinner, FaUndo, FaEye, FaPlus 
 } from 'react-icons/fa';
 
 import { getEntrenadorById } from '@/pages/entrenadores/services/gerEntrenadorById';
 import { getClasesByEntrenador } from '@/pages/entrenadores/services/getClasesByEntrenador';
 import { updateEntrenador } from '@/pages/entrenadores/services/updateEntrenador';
 
-// Definimos un tipo extendido para manejar los campos temporales del formulario
 interface FormData extends Partial<Entrenador> {
   phoneCode?: string;
   simplePhone?: string;
@@ -38,7 +37,6 @@ const EntrenadorPerfil: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Estado del Formulario usando el tipo extendido
   const [formData, setFormData] = useState<FormData>({});
 
   useEffect(() => {
@@ -55,7 +53,7 @@ const EntrenadorPerfil: React.FC = () => {
         setEntrenador(entrenadorData);
         setClases(clasesData);
 
-        let code = "0414"; // Default
+        let code = "0414"; 
         let num = "";
 
         if (entrenadorData.telefono) {
@@ -64,7 +62,6 @@ const EntrenadorPerfil: React.FC = () => {
             code = parts[0];
             num = parts[1];
           } else {
-            // Fallback por si viene sin guion
             code = entrenadorData.telefono.substring(0, 4);
             num = entrenadorData.telefono.substring(4);
           }
@@ -89,26 +86,19 @@ const EntrenadorPerfil: React.FC = () => {
     loadData();
   }, [id]);
 
-  // Manejador de cambios genérico con MAYÚSCULAS forzadas
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
     let finalValue = value;
 
-    // Si es nombre o apellido, convertir a mayúsculas
     if (name === 'nombre' || name === 'apellido') {
         finalValue = value.toUpperCase();
     }
-
     setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
 
-  // Manejador ESPECÍFICO para el teléfono (solo números)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = e.target;
-      // Reemplazamos todo lo que NO sea número por vacío
       const onlyNums = value.replace(/[^0-9]/g, '');
-      
       setFormData(prev => ({ ...prev, simplePhone: onlyNums }));
   };
 
@@ -120,10 +110,8 @@ const EntrenadorPerfil: React.FC = () => {
       setSaving(true);
       setError(null);
 
-      // Combinar código y número antes de guardar
       const finalPhone = `${formData.phoneCode}-${formData.simplePhone}`;
       
-      // Creamos el objeto limpio para enviar
       const payload = {
         ...formData,
         telefono: finalPhone
@@ -172,9 +160,6 @@ const EntrenadorPerfil: React.FC = () => {
   if (error && !entrenador) return <div className="p-8 text-center text-red-600">{error}</div>;
   if (!entrenador) return null;
 
-  const hasClases = clases.length > 0;
-
-  // Clases de estilo para reutilizar
   const inputBaseClass = `p-3 border transition-all outline-none ${
      isEditing 
        ? 'border-blue-300 focus:ring-2 focus:ring-blue-500/20 bg-white' 
@@ -219,10 +204,11 @@ const EntrenadorPerfil: React.FC = () => {
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 ${hasClases ? 'lg:grid-cols-3' : ''} gap-8 mt-6`}>
+      {/* El grid ahora SIEMPRE tiene 3 columnas en pantallas grandes (lg:grid-cols-3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
         
-        {/* COLUMNA IZQUIERDA: Formulario */}
-        <div className={`${hasClases ? 'lg:col-span-2' : 'w-full'} bg-white rounded-2xl shadow-sm border border-slate-100 p-6 relative`}>
+        {/* COLUMNA IZQUIERDA: Formulario (Ocupa 2 columnas) */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 relative">
           
           {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">{error}</div>}
           {successMsg && <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm border border-green-100 flex items-center gap-2"><FaCheckCircle /> {successMsg}</div>}
@@ -245,7 +231,7 @@ const EntrenadorPerfil: React.FC = () => {
                   name="nombre"
                   disabled={!isEditing}
                   value={formData.nombre || ''}
-                  onChange={handleInputChange} // Usa el manejador de mayúsculas
+                  onChange={handleInputChange} 
                   className={`w-full rounded-lg ${inputBaseClass}`}
                 />
               </div>
@@ -258,7 +244,7 @@ const EntrenadorPerfil: React.FC = () => {
                   name="apellido"
                   disabled={!isEditing}
                   value={formData.apellido || ''}
-                  onChange={handleInputChange} // Usa el manejador de mayúsculas
+                  onChange={handleInputChange} 
                   className={`w-full rounded-lg ${inputBaseClass}`}
                 />
               </div>
@@ -292,7 +278,7 @@ const EntrenadorPerfil: React.FC = () => {
                         maxLength={7}
                         disabled={!isEditing}
                         value={formData.simplePhone || ''}
-                        onChange={handlePhoneChange} // <--- USA EL MANEJADOR ESPECÍFICO
+                        onChange={handlePhoneChange} 
                         placeholder="1234567"
                         className={`w-full rounded-r-lg font-mono ${inputBaseClass}`}
                     />
@@ -346,18 +332,46 @@ const EntrenadorPerfil: React.FC = () => {
           </form>
         </div>
 
-        {/* COLUMNA DERECHA: Clases */}
-        {hasClases && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-fit sticky top-6">
-            <div className="flex items-center justify-between mb-6">
+        {/* COLUMNA DERECHA: Clases (Siempre visible) */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-fit sticky top-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <FaSwimmingPool className="text-blue-500" /> Clases Asignadas
+                <FaSwimmingPool className="text-blue-500" /> Clases
               </h2>
               <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full border border-blue-100">
                 {clases.length}
               </span>
             </div>
+            
+            {/* Botón para crear clase asignada directamente a este profesor */}
+            <button 
+              onClick={() => navigate(`/entrenadores/horarios?entrenador=${id}`)}
+              className="cursor-pointer flex items-center gap-1 text-xs font-bold bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-blue-300"
+              title="Asignar nueva clase a este profesor"
+            >
+              <FaPlus /> Crear
+            </button>
+          </div>
 
+          {clases.length === 0 ? (
+            // ESTADO VACÍO (Empty State)
+            <div className="text-center py-10 bg-slate-50 rounded-xl border border-slate-200 dashed flex flex-col items-center">
+              <div className="bg-white p-3 rounded-full shadow-sm mb-3">
+                <FaSwimmingPool className="text-slate-300 text-3xl" />
+              </div>
+              <p className="text-slate-500 text-sm font-medium px-4 mb-4">
+                Este profesor aún no tiene clases asignadas.
+              </p>
+              <button
+                onClick={() => navigate(`/entrenadores/horarios?entrenador=${id}`)}
+                className="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline transition-all cursor-pointer"
+              >
+                + Crear su primera clase
+              </button>
+            </div>
+          ) : (
+            // LISTADO DE CLASES
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
               {clases.map((clase) => (
                 <div 
@@ -369,13 +383,13 @@ const EntrenadorPerfil: React.FC = () => {
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-slate-700 group-hover:text-blue-700 transition-colors">
+                    <h3 className="font-bold text-slate-700 group-hover:text-blue-700 transition-colors leading-tight">
                       {clase.nombre}
                     </h3>
                     {clase.activo ? (
-                      <FaCheckCircle className="text-green-500 text-lg" title="Activo" />
+                      <FaCheckCircle className="text-green-500 text-lg shrink-0" title="Activa" />
                     ) : (
-                      <FaTimesCircle className="text-slate-400 text-lg" title="Inactivo" />
+                      <FaTimesCircle className="text-slate-400 text-lg shrink-0" title="Inactiva" />
                     )}
                   </div>
                   
@@ -385,7 +399,6 @@ const EntrenadorPerfil: React.FC = () => {
                       <p className="text-lg font-mono font-bold text-slate-600">${clase.costo}</p>
                     </div>
 
-                    {/* BOTÓN VER CLASE */}
                     <button 
                       onClick={() => navigate(`/entrenadores/clases/${clase.id}`)}
                       className="cursor-pointer flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors border border-blue-100 hover:border-blue-200"
@@ -396,8 +409,8 @@ const EntrenadorPerfil: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
       </div>
     </div>

@@ -1,4 +1,4 @@
-import type { RecordModel } from "pocketbase";
+import type { ListResult, RecordModel } from "pocketbase";
 
 export interface ProfessorData {
   nombre: string;
@@ -37,15 +37,6 @@ export interface ClaseFormData {
   edadMin: number;
   entrenador_id: string;
   horarios: HorarioInterno[];
-}
-
-export interface ClaseWithExpand extends Clase {
-  expand?: {
-    entrenador_id?: {
-      nombre: string;
-      apellido: string;
-    }
-  }
 }
 
 // --- Tipos para Alumnos (Atletas) ---
@@ -103,4 +94,45 @@ export interface VistaClaseAlumno {
   atleta_cedula: string;
   atleta_telefono: string;
   cobertura_hasta: string | null;
+}
+
+// Tipo de respuesta paginada nativa de PocketBase
+export type PaginatedEntrenadores = ListResult<Entrenador>;
+
+// Interfaz para los parámetros de búsqueda del servicio
+export interface GetEntrenadoresParams {
+  page?: number;
+  perPage?: number;
+  searchTerm?: string;
+  showInactive?: boolean;
+}
+
+export interface ClaseWithExpand extends RecordModel {
+  id: string;
+  nombre: string;
+  costo: number;
+  edadMin: number;
+  activo: boolean;
+  entrenador_id?: string;
+  expand?: {
+    entrenador_id?: {
+      nombre: string;
+      apellido: string;
+    };
+  };
+}
+
+// Tipo de respuesta paginada nativa de PocketBase para Clases
+export type PaginatedClases = ListResult<ClaseWithExpand>;
+
+// Interfaz para los parámetros del nuevo servicio
+export interface GetClasesParams {
+  page?: number;
+  perPage?: number;
+  searchTerm?: string;
+}
+
+export interface ClaseFormState extends Omit<Partial<ClaseFull>, 'costo' | 'edadMin'> {
+  costo?: number | string;
+  edadMin?: number | string;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { InputGroup } from '@/components/InputGroup'; 
 
 // Iconos
@@ -21,20 +21,23 @@ import type { ClaseFormData, Entrenador } from '@/pages/entrenadores/types';
 import { createClaseConHorarios } from '@/pages/entrenadores/services/createClaseHorario';
 import { getEntrenadoresActive } from '@/pages/entrenadores/services/getEntrenadoresActive';
 
-
 const ClasesForm: React.FC = () => {
   const navigate = useNavigate();
+  
+  // 1. Instanciamos useSearchParams para leer la URL
+  const [searchParams] = useSearchParams();
+  const entrenadorPreseleccionado = searchParams.get('entrenador'); // Leerá el ID si existe
   
   // Estados de control
   const [loading, setLoading] = useState(false);
   const [entrenadores, setEntrenadores] = useState<Entrenador[]>([]);
   
-  // Estado principal del formulario
+  // Estado principal del formulario (Inicializamos con el ID preseleccionado si existe)
   const [formData, setFormData] = useState<ClaseFormData>({
     nombre: '',
     costo: 0,
     edadMin: 0,
-    entrenador_id: '',
+    entrenador_id: entrenadorPreseleccionado || '',
     horarios: []
   });
 
@@ -67,7 +70,6 @@ const ClasesForm: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Validaciones para campos numéricos (Rango 0 - 100)
     if (name === 'costo' || name === 'edadMin') {
       const numValue = Number(value);
       if (numValue < 0) return;
@@ -76,7 +78,6 @@ const ClasesForm: React.FC = () => {
       return;
     }
 
-    // Nombre en mayúsculas y asignación general
     setFormData(prev => ({ 
       ...prev, 
       [name]: name === 'nombre' ? value.toUpperCase() : value 
@@ -108,30 +109,14 @@ const ClasesForm: React.FC = () => {
   // Envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-// 1. Acumulador de errores
     const errores: string[] = [];
 
-    // 2. Validaciones de negocio
-    if (!formData.entrenador_id) {
-      errores.push("Debe seleccionar un entrenador responsable.");
-    }
-    if(!formData.nombre.trim()) {
-      errores.push("El nombre de la clase no puede estar vacío.");
-    }
-    
-    if (formData.horarios.length === 0) {
-      errores.push("Debe añadir al menos un horario para la clase.");
-    }
+    if (!formData.entrenador_id) errores.push("Debe seleccionar un entrenador responsable.");
+    if (!formData.nombre.trim()) errores.push("El nombre de la clase no puede estar vacío.");
+    if (formData.horarios.length === 0) errores.push("Debe añadir al menos un horario para la clase.");
+    if (formData.costo <= 0) errores.push("El costo mensual debe ser mayor a 0.");
+    if (formData.edadMin < 0) errores.push("La edad mínima no puede ser negativa.");
 
-    if (formData.costo <= 0) {
-      errores.push("El costo mensual debe ser mayor a 0.");
-    }
-
-    if (formData.edadMin < 0) {
-      errores.push("La edad mínima no puede ser negativa.");
-    }
-
-    // 3. Si hay errores, los mostramos todos juntos y frenamos la ejecución
     if (errores.length > 0) {
       const mensajeFinal = "⚠️ Faltan datos obligatorios para continuar:\n\n- " + errores.join("\n- ");
       alert(mensajeFinal);
@@ -153,7 +138,6 @@ const ClasesForm: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-gray-200 p-6 shadow-sm transition-all">
-      {/* Encabezado */}
       <h3 className="font-bold text-xs text-gray-400 uppercase mb-5 flex items-center gap-2 border-b border-gray-100 pb-2">
         <span className="text-blue-600 bg-blue-50 p-1 rounded-md">
           <MdOutlineClass size={18} />
@@ -183,16 +167,27 @@ const ClasesForm: React.FC = () => {
               name="entrenador_id"
               value={formData.entrenador_id}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:border-blue-500 outline-none bg-white transition-all cursor-pointer"
+              // Bloqueamos el select dinámicamente si viene el parámetro en la URL
+              disabled={!!entrenadorPreseleccionado}
+              className={`w-full border rounded-lg p-2.5 text-sm outline-none transition-all ${
+                entrenadorPreseleccionado 
+                  ? 'border-transparent bg-slate-100 text-slate-500 cursor-not-allowed font-semibold' 
+                  : 'border-gray-300 bg-white focus:border-blue-500 cursor-pointer'
+              }`}
               required
             >
               <option value="">Seleccione un entrenador...</option>
               {entrenadores.map(ent => (
                 <option key={ent.id} value={ent.id}>
-                  {ent.apellido} {ent.nombre}
+                  {ent.apellido} {ent.nombre} - CI: {ent.cedula}
                 </option>
               ))}
             </select>
+            {entrenadorPreseleccionado && (
+              <p className="text-[10px] text-blue-500 mt-1 ml-1 font-medium">
+                * Entrenador preasignado automáticamente.
+              </p>
+            )}
           </div>
         </div>
 
@@ -238,7 +233,7 @@ const ClasesForm: React.FC = () => {
               <select 
                 value={tempDia} 
                 onChange={(e) => setTempDia(e.target.value)}
-                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 {diasSemana.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
@@ -249,7 +244,7 @@ const ClasesForm: React.FC = () => {
               <select 
                 value={tempHora} 
                 onChange={(e) => setTempHora(e.target.value)}
-                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 {bloquesHora.map(h => <option key={h} value={h}>{h}</option>)}
               </select>
@@ -258,13 +253,12 @@ const ClasesForm: React.FC = () => {
             <button
               type="button"
               onClick={addHorario}
-              className="bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 text-xs font-bold shadow-md active:scale-95"
+              className="bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 text-xs font-bold shadow-md active:scale-95 cursor-pointer"
             >
               <MdAddCircle size={18} /> AÑADIR BLOQUE
             </button>
           </div>
 
-          {/* Listado de bloques agregados */}
           <div className="flex flex-wrap gap-2 pt-2">
             {formData.horarios.length === 0 && (
               <p className="text-xs text-slate-400 italic">No se han definido horarios para esta clase...</p>
@@ -279,7 +273,7 @@ const ClasesForm: React.FC = () => {
                 <button 
                   type="button"
                   onClick={() => removeHorario(index)}
-                  className="p-1 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors ml-1"
+                  className="p-1 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors ml-1 cursor-pointer"
                 >
                   <MdDeleteOutline size={16} />
                 </button>
@@ -288,7 +282,6 @@ const ClasesForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Botón Guardar - Estilo Negro */}
         <button
           type="submit"
           disabled={loading}
