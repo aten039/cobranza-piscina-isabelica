@@ -5,4 +5,5 @@
 
 main.exe
 main.go
-/backend/pb_data/
+/backend/pb_data/auxiliary.db
+/backend/pb_data/data.db
