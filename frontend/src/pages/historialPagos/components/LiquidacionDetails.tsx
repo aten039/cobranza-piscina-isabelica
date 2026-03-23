@@ -1,8 +1,7 @@
-// ARCHIVO: src/pages/historialLiquidaciones/LiquidacionDetails.tsx
-
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiUser, FiDollarSign, FiList } from "react-icons/fi";
+// Agregamos FiEye a las importaciones
+import { FiArrowLeft, FiUser, FiDollarSign, FiList, FiEye } from "react-icons/fi"; 
 import { PAYMENT_OPTIONS, type LiquidacionConPagos } from "@/pages/historialPagos/types";
 import { getLiquidacionById } from "@/pages/historialPagos/services/getLiquidacionById";
 
@@ -178,6 +177,8 @@ export default function LiquidacionDetails() {
                   <th className="px-5 py-3 font-medium">Atleta</th>
                   <th className="px-5 py-3 font-medium">Clase</th>
                   <th className="px-5 py-3 font-medium text-right">Monto Pagado</th>
+                  {/* Nueva Columna para Acciones */}
+                  <th className="px-5 py-3 font-medium text-center w-16">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -186,7 +187,7 @@ export default function LiquidacionDetails() {
                   const clase = pago.expand?.matricula_id?.expand?.clase_id;
                   
                   return (
-                    <tr key={pago.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={pago.id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-5 py-3 whitespace-nowrap text-slate-500">
                         {formatDate(pago.fecha_pago)}
                       </td>
@@ -198,6 +199,20 @@ export default function LiquidacionDetails() {
                       </td>
                       <td className={`px-5 py-3 font-semibold text-right ${pago.type === 'USD' ? 'text-emerald-700' : 'text-blue-700'}`}>
                         {formatMoneda(pago.monto, pago.type as 'USD' | 'BS')}
+                      </td>
+                      {/* Nuevo Botón del Ojito */}
+                      <td className="px-5 py-3 text-center">
+                        
+                          
+                        <button
+                            onClick={() => navigate(`/recordPagos/details/${pago.id}`)}
+                            className="cursor-pointer group relative inline-flex items-center justify-center p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 hover:scale-110 shadow-sm"
+                            title="Ver detalles completos"
+                          >
+                            <FiEye size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                            
+                           
+                          </button>
                       </td>
                     </tr>
                   );
