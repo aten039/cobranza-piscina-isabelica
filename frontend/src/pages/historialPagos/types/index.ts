@@ -8,9 +8,9 @@ export interface AtletaInfo extends RecordModel {
   cedula: string;
   fecha_nacimiento: string; // Necesario para calcular edad
   // Ajusta estos campos según cómo se llamen en tu tabla "atletas" o "representantes"
-  nombre_representante?: string;
-  cedula_representante?: string;
-  telefono_representante?: string; 
+  representante_nombre?: string;
+  representante_cedula?: string;
+  telefono?: string; 
 }
 
 // ... (resto de tus tipos)

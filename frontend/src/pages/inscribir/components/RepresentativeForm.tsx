@@ -60,8 +60,9 @@ export const RepresentativeForm: React.FC<RepProps> = ({ formData, handleChange 
               onChange={handleChange} 
               className="bg-white border border-orange-200 border-r-0 rounded-l-lg text-xs pl-2 py-2 outline-none text-gray-600"
             >
-              <option>V</option>
-              <option>E</option>
+              <option value="V">V</option>
+              <option value="E">E</option>
+              <option value="P">P</option>
             </select>
             <input 
               type="tel" 
@@ -75,28 +76,29 @@ export const RepresentativeForm: React.FC<RepProps> = ({ formData, handleChange 
           </div>
 
           {/* TELÉFONO SOLO NÚMEROS */}
-          <div className="flex">
-            <select 
+          <div className="flex shadow-sm rounded-lg">
+            {/* Input del código de área del Representante */}
+            <input 
+              type="tel"
               name="repPhoneCode" 
               value={formData.repPhoneCode} 
-              onChange={handleChange} 
-              className="bg-white border border-orange-200 border-r-0 rounded-l-lg text-xs pl-2 py-2 outline-none text-gray-600"
-            >
-                        <option value="0422">0422</option>
-                        <option value="0412">0412</option>
-                        <option value="0414">0414</option>
-                        <option value="0424">0424</option>
-                        <option value="0416">0416</option>
-                        <option value="0426">0426</option>
-            </select>
+              onChange={handleOnlyNumbers} // <--- Ahora el código también usa tu validación
+              maxLength={4}
+              minLength={4}
+              required
+              placeholder="0414"
+              className="w-20 bg-white border border-orange-200 border-r-0 rounded-l-lg text-xs px-2 py-2 outline-none focus:border-orange-400 focus:z-10 text-center font-mono text-gray-600 transition-colors"
+            />
+            
+            {/* Input del número principal del Representante */}
             <input 
               type="tel" 
-              maxLength={7} 
               name="repPhoneNum" 
               placeholder="Teléfono" 
               value={formData.repPhoneNum} 
-              onChange={handleOnlyNumbers} // <--- Validación aplicada
-              className="w-full border border-orange-200 bg-white rounded-r-lg p-2 text-sm focus:outline-none focus:border-orange-400 font-mono" 
+              onChange={handleOnlyNumbers} 
+              maxLength={7} 
+              className="w-full border border-orange-200 bg-white rounded-r-lg p-2 text-sm focus:outline-none focus:border-orange-400 focus:z-10 font-mono transition-colors" 
             />
           </div>
         </div>

@@ -65,7 +65,9 @@ export const PersonalDataForm: React.FC<Props> = ({ formData, handleChange, age,
           <label className="text-xs font-bold text-gray-500 ml-1 block mb-1">Cédula</label>
           <div className="flex">
             <select name="cedulaType" value={formData.cedulaType} onChange={handleChange} className="bg-gray-50 border border-gray-300 border-r-0 rounded-l-lg text-sm pl-3 pr-2 py-2.5 outline-none">
-              <option>V</option><option>E</option>
+              <option value="V">V</option>
+              <option value="E">E</option>
+              <option value="P">P</option>
             </select>
             <input 
                 type="tel" 
@@ -109,31 +111,33 @@ export const PersonalDataForm: React.FC<Props> = ({ formData, handleChange, age,
           <label className={`text-xs font-bold ml-1 block mb-1 ${isMinor ? 'text-gray-400' : 'text-gray-500'}`}>
             Teléfono {isMinor && '(Inactivo)'}
           </label>
-          <div className={`flex transition-opacity ${isMinor ? 'opacity-50' : 'opacity-100'}`}>
-            <select
-                   name="phoneCode"
-                   value={formData.phoneCode}
-                   onChange={handleChange}
-                   className={`bg-gray-100 border border-gray-300 border-r-0 rounded-l-lg text-sm px-2 py-2.5 outline-none focus:bg-white focus:border-blue-500 transition-colors cursor-pointer text-center font-bold text-gray-700 w-20`}
-               >
-                        <option value="0422">0422</option>
-                        <option value="0412">0412</option>
-                        <option value="0414">0414</option>
-                        <option value="0424">0424</option>
-                        <option value="0416">0416</option>
-                        <option value="0426">0426</option>
-               </select>
-            <input 
-                type="tel" 
-                name="phoneNum" 
-                value={formData.phoneNum} 
-                onChange={handleOnlyNumbers} // <--- Validación aplicada
-                disabled={isMinor} 
-                className="w-full border border-gray-300 rounded-r-lg p-2.5 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 font-mono" 
-                placeholder={isMinor ? "Bloqueado" : "1234567"} 
-                maxLength={7} 
-            />
-          </div>
+          <div className={`flex shadow-sm rounded-lg transition-opacity ${isMinor ? 'opacity-50' : 'opacity-100'}`}>
+          {/* Input del código de área (reemplaza al select) */}
+          <input
+            type="tel"
+            name="phoneCode"
+            value={formData.phoneCode}
+            onChange={handleOnlyNumbers} // Reutilizamos tu función de solo números
+            disabled={isMinor} // Se bloquea igual que el resto si es menor
+            maxLength={4}
+            minLength={4}
+            required
+            placeholder={isMinor ? "---" : "0414"}
+            className={`w-20 bg-gray-100 border border-gray-300 border-r-0 rounded-l-lg text-sm px-2 py-2.5 outline-none focus:bg-white focus:border-blue-500 focus:z-10 transition-colors text-center font-mono font-bold text-gray-700 disabled:cursor-not-allowed`}
+          />
+          
+          {/* Input del número principal */}
+          <input 
+            type="tel" 
+            name="phoneNum" 
+            value={formData.phoneNum} 
+            onChange={handleOnlyNumbers} 
+            disabled={isMinor} 
+            maxLength={7} 
+            placeholder={isMinor ? "Bloqueado" : "1234567"} 
+            className="w-full border border-gray-300 rounded-r-lg p-2.5 focus:outline-none focus:border-blue-500 focus:z-10 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono transition-colors" 
+          />
+        </div>
         </div>
       </div>
 

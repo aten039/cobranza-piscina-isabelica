@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiUser, FiCalendar, FiDollarSign, FiCheckCircle, FiClock, FiFileText, FiUsers } from "react-icons/fi";
+import { 
+  FiArrowLeft, 
+  FiUser, 
+  FiCalendar, 
+  FiDollarSign, 
+  FiCheckCircle, 
+  FiClock, 
+  FiFileText, 
+  FiUsers, 
+  FiExternalLink 
+} from "react-icons/fi";
 import type { PagoHistorial } from "@/pages/historialPagos/types";
 import { getPagoById } from "@/pages/historialPagos/services/getPagosById";
 
@@ -27,27 +37,20 @@ const formatMetodo = (metodo: string) => {
   return map[metodo] || metodo.replace(/_/g, ' ').toUpperCase();
 };
 
-// --- CORRECCIÓN DE FECHAS ---
-// PocketBase devuelve "2023-10-25 10:00:00.000Z". Lo limpiamos para evitar Invalid Date
 const formatDate = (dateString?: string) => {
   if (!dateString) return "N/A";
   try {
-    // Reemplaza el espacio por 'T' para asegurar el parseo correcto en todos los navegadores
     const safeDateString = dateString.includes(' ') ? dateString.replace(' ', 'T') : dateString;
     const date = new Date(safeDateString);
-    
-    // Si la fecha es inválida, evitamos que crashee
     if (isNaN(date.getTime())) return "Fecha Inválida";
-    
     return date.toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
   } catch (error) {
-    if ( error instanceof Error) {
+    if (error instanceof Error) {
       console.error("Error formateando la fecha:", error.message);
     }
   }
 };
 
-// --- CÁLCULO DE EDAD ---
 const calcularEdad = (fechaNacimiento?: string) => {
   if (!fechaNacimiento) return null;
   const safeDateString = fechaNacimiento.includes(' ') ? fechaNacimiento.replace(' ', 'T') : fechaNacimiento;
@@ -119,12 +122,11 @@ export default function PagoDetails() {
   const profesor = clase?.expand?.entrenador_id;
   const estaLiquidado = !!pago.liquidacion_id;
 
-  // Calculamos la edad para determinar si es menor
   const edadAtleta = calcularEdad(atleta?.fecha_nacimiento);
   const esMenor = edadAtleta !== null && edadAtleta < 18;
+  const tieneRepresentante = !!atleta?.representante_nombre;
 
   return (
-    // Agregado mb-12 para dar respiro visual al final de la página
     <div className="max-w-4xl mx-auto space-y-6 mb-12">
       
       {/* Botón Volver y Cabecera */}
@@ -142,9 +144,13 @@ export default function PagoDetails() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* AQUÍ ESTÁ LA MAGIA DEL 2x2:
+        'grid-cols-1 md:grid-cols-2' crea las dos columnas.
+        'items-start' evita que las tarjetas se estiren verticalmente si su vecina es más grande.
+      */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         
-        {/* Tarjeta: Información del Atleta */}
+        {/* CUADRANTE 1: Información del Atleta */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 border-b border-slate-200 px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -157,16 +163,22 @@ export default function PagoDetails() {
               </span>
             )}
           </div>
-          <div className="p-5 space-y-4">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre Completo</p>
-              <p className="text-slate-900 font-medium text-lg">
-                {atleta ? `${atleta.nombre} ${atleta.apellido}` : "Desconocido"}
-              </p>
-              {atleta?.cedula && <p className="text-sm text-slate-500 font-mono">C.I: {atleta.cedula}</p>}
+          
+          <div className="p-5">
+            <div 
+              onClick={() => atleta?.id && navigate(`/atletas/perfil/${atleta.id}`)}
+              className="group cursor-pointer rounded-lg p-3 -mx-3 -mt-3 mb-2 hover:bg-slate-50 transition-colors flex justify-between items-center"
+            >
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nombre Completo</p>
+                <p className="text-slate-900 font-medium text-lg group-hover:text-blue-600 transition-colors">
+                  {atleta ? `${atleta.nombre} ${atleta.apellido}` : "Desconocido"}
+                </p>
+                {atleta?.cedula && <p className="text-sm text-slate-500 font-mono">{atleta.cedula}</p>}
+              </div>
+              <FiExternalLink className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </div>
 
-            {/* Condicional: Si es menor de edad, mostrar representante */}
             {esMenor && (
               <div className="pt-3 border-t border-slate-100 bg-blue-50/50 -mx-5 px-5 pb-3">
                 <div className="flex items-center gap-2 mb-2 pt-2">
@@ -174,37 +186,42 @@ export default function PagoDetails() {
                   <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Representante Legal</p>
                 </div>
                 <p className="text-slate-800 font-medium">
-                  {atleta?.nombre_representante || "No registrado"}
+                  {atleta?.representante_nombre || "No registrado"}
                 </p>
                 <div className="flex gap-4 mt-1">
-                  {atleta?.cedula_representante && (
-                    <p className="text-xs text-slate-500 font-mono">C.I: {atleta.cedula_representante}</p>
+                  {atleta?.representante_cedula && (
+                    <p className="text-xs text-slate-500 font-mono">{atleta.representante_cedula}</p>
                   )}
-                  {atleta?.telefono_representante && (
-                    <p className="text-xs text-slate-500">Tel: {atleta.telefono_representante}</p>
+                  {tieneRepresentante && atleta?.telefono && (
+                    <p className="text-xs text-slate-500">Tel: {atleta.telefono}</p>
                   )}
                 </div>
               </div>
             )}
             
-            <div className="pt-3 border-t border-slate-100">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Clase y Entrenador</p>
-              <p className="text-slate-900 font-medium mt-1">{clase ? clase.nombre : "N/A"}</p>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Prof: {profesor ? `${profesor.nombre} ${profesor.apellido}` : "N/A"}
-              </p>
+            <div 
+              onClick={() => clase?.id && navigate(`/entrenadores/clases/${clase.id}`)}
+              className="pt-3 mt-3 border-t border-slate-100 group cursor-pointer rounded-lg p-3 -mx-3 -mb-3 hover:bg-slate-50 transition-colors flex justify-between items-center"
+            >
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Clase y Entrenador</p>
+                <p className="text-slate-900 font-medium mt-1 group-hover:text-blue-600 transition-colors">{clase ? clase.nombre : "N/A"}</p>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Prof: {profesor ? `${profesor.nombre} ${profesor.apellido}` : "N/A"}
+                </p>
+              </div>
+              <FiExternalLink className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </div>
           </div>
         </div>
 
-        {/* Tarjeta: Detalles Financieros */}
+        {/* CUADRANTE 2: Detalles Financieros */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 border-b border-slate-200 px-5 py-4 flex items-center gap-2">
             <FiDollarSign className="text-emerald-600" size={18} />
             <h3 className="font-semibold text-slate-800">Información de la Transacción</h3>
           </div>
           <div className="p-5 space-y-4">
-            
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Monto Pagado</p>
@@ -230,11 +247,10 @@ export default function PagoDetails() {
                 </p>
               </div>
             </div>
-
           </div>
         </div>
 
-        {/* Tarjeta: Cobertura del Mes */}
+        {/* CUADRANTE 3: Cobertura del Mes */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-50 border-b border-slate-200 px-5 py-4 flex items-center gap-2">
             <FiCalendar className="text-purple-600" size={18} />
@@ -253,24 +269,28 @@ export default function PagoDetails() {
           </div>
         </div>
 
-        {/* Tarjeta: Estado de Liquidación */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50 border-b border-slate-200 px-5 py-4 flex items-center gap-2">
+        {/* CUADRANTE 4: Estado de Liquidación */}
+        <div 
+          className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${estaLiquidado ? 'group cursor-pointer hover:border-emerald-300 transition-colors' : ''}`}
+          onClick={() => estaLiquidado && pago.liquidacion_id && navigate(`/recordPagos/liq/details/${pago.liquidacion_id}`)}
+        >
+          <div className={`bg-slate-50 border-b border-slate-200 px-5 py-4 flex items-center gap-2 ${estaLiquidado ? 'group-hover:bg-emerald-50/50 transition-colors' : ''}`}>
             <FiFileText className="text-orange-500" size={18} />
             <h3 className="font-semibold text-slate-800">Estado de Liquidación</h3>
           </div>
-          <div className="p-5 flex items-center gap-4">
+          <div className={`p-5 flex items-center gap-4 ${estaLiquidado ? 'group-hover:bg-emerald-50/30 transition-colors' : ''}`}>
             {estaLiquidado ? (
               <>
                 <div className="p-3 bg-emerald-100 text-emerald-600 rounded-full flex-shrink-0">
                   <FiCheckCircle size={24} />
                 </div>
                 <div>
-                  <p className="text-emerald-700 font-semibold">Pago Liquidado (Comisión pagada)</p>
+                  <p className="text-emerald-700 font-semibold group-hover:text-emerald-800 transition-colors">Pago Liquidado (Comisión pagada)</p>
                   <p className="text-sm text-slate-500 font-mono mt-1">
                     ID Liq: {pago.liquidacion_id}
                   </p>
                 </div>
+                <FiExternalLink className="ml-auto text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
               </>
             ) : (
               <>

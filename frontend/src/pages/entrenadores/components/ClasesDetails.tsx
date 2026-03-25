@@ -380,7 +380,7 @@ const ClaseDetails: React.FC = () => {
                   <option value="">Seleccione...</option>
                   {allEntrenadores.map(ent => (
                     <option key={ent.id} value={ent.id}>
-                      {ent.nombre} {ent.apellido} - CI: {ent.cedula}
+                      {ent.nombre} {ent.apellido}  {ent.cedula}
                     </option>
                   ))}
                 </select>

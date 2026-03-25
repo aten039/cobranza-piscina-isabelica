@@ -254,24 +254,23 @@ const EntrenadorPerfil: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Teléfono</label>
                 <div className="relative flex w-full shadow-sm rounded-lg">
                     <div className="absolute top-3.5 left-3 text-slate-400 z-10 pointer-events-none">
-                       <FaPhoneAlt />
+                        <FaPhoneAlt />
                     </div>
                     
-                    <select
+                    {/* Nuevo Input para el código de área */}
+                    <input
+                        type="tel"
                         name="phoneCode"
                         disabled={!isEditing}
-                        value={formData.phoneCode || '0412'}
-                        onChange={handleInputChange}
-                        className={`w-28 pl-9 pr-2 rounded-l-lg border-r-0 cursor-pointer appearance-none ${inputBaseClass}`}
-                    >
-                        <option value="0422">0422</option>
-                        <option value="0412">0412</option>
-                        <option value="0414">0414</option>
-                        <option value="0424">0424</option>
-                        <option value="0416">0416</option>
-                        <option value="0426">0426</option>
-                    </select>
+                        value={formData.phoneCode || ''}
+                        onChange={handleInputChange} 
+                        maxLength={4}
+                        minLength={4}
+                        placeholder="0412"
+                        className={`w-24 pl-9 pr-2 rounded-l-lg border-r-0 font-mono text-center  ${inputBaseClass}`}
+                    />
 
+                    {/* Input para el resto del número */}
                     <input
                         type="tel"
                         name="simplePhone"
@@ -280,7 +279,7 @@ const EntrenadorPerfil: React.FC = () => {
                         value={formData.simplePhone || ''}
                         onChange={handlePhoneChange} 
                         placeholder="1234567"
-                        className={`w-full rounded-r-lg font-mono ${inputBaseClass}`}
+                        className={`w-full rounded-r-lg font-mono focus:z-10 ${inputBaseClass}`}
                     />
                 </div>
               </div>

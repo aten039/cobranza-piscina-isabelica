@@ -118,8 +118,17 @@ const InscribirPages: React.FC = () => {
       if (!formData.repSurname.trim()) errors.push("Apellido del representante");
       if (!formData.repCedulaNum.trim()) errors.push("Cédula del representante");
       if (!formData.repPhoneNum.trim()) errors.push("Teléfono del representante");
+      if (formData.repPhoneNum.trim().length < 7) errors.push("El telefono debe tener al menos 7 dígitos");
+      if (!formData.repPhoneCode || formData.phoneCode.length < 4) {
+    errors.push("El código de área debe tener exactamente 4 dígitos (Ej: 0414).");
+  }
+      
     } else {
       if (!formData.phoneNum.trim()) errors.push("Teléfono del alumno");
+      if (formData.phoneNum.trim().length < 7) errors.push("El telefono debe tener al menos 7 dígitos");
+      if (!formData.phoneCode || formData.phoneCode.length < 4) {
+    errors.push("El código de área debe tener exactamente 4 dígitos (Ej: 0414).");
+  }
       if (!formData.cedulaNum.trim()) errors.push("Cédula del alumno");
     }
 
@@ -284,7 +293,7 @@ const InscribirPages: React.FC = () => {
         {/* PASO 2 */}
         {step === 2 && (
           <div className="max-w-2xl mx-auto space-y-6 animate-fade">
-            <button onClick={() => setStep(1)} disabled={isLoading} className="text-gray-500 hover:text-gray-900 flex items-center gap-1 text-sm font-bold disabled:opacity-50">
+            <button onClick={() => setStep(1)} disabled={isLoading} className="cursor-pointer text-gray-500 hover:text-gray-900 flex items-center gap-1 text-sm font-bold disabled:opacity-50">
               <MdArrowBack className="text-lg" /> Corregir Datos
             </button>
             

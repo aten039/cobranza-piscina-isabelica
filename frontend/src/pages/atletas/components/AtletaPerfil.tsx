@@ -275,7 +275,7 @@ const AtletaPerfil: React.FC = () => {
       setAtleta(updated); setSuccessMsg("Perfil actualizado correctamente"); setIsEditing(false);
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err) {
-      setError("No se pudieron guardar los cambios. Verifique su conexión.");
+      setError("No se pudieron guardar los cambios.");
       console.error(err);
     } finally {
       setSaving(false);
@@ -360,21 +360,42 @@ const AtletaPerfil: React.FC = () => {
                         <label className={labelClass}>Cédula <span className="text-red-400">*</span></label>
                         <div className="flex w-full">
                             <select name="cedulaType" value={formData.cedulaType} onChange={handleInputChange} disabled={!isEditing} className={`w-16 ${prefixSelectClass}`}>
-                                <option value="V">V</option><option value="E">E</option>
+                                <option value="V">V</option>
+                                <option value="E">E</option>
+                                <option value="P">P</option>
                             </select>
                             <input type="text" name="cedulaNum" maxLength={10} value={formData.cedulaNum || ''} onChange={handleNumberChange} disabled={!isEditing} className={`flex-1 rounded-l-none rounded-r-lg font-mono ${inputClass}`} />
                         </div>
                     </div>
                     <div>
                         <label className={labelClass}>Teléfono <span className="text-red-400">*</span></label>
-                        <div className="flex w-full">
-                            <select name="phoneCode" value={formData.phoneCode} onChange={handleInputChange} disabled={!isEditing} className={`w-24 ${prefixSelectClass}`}>
-                                <option value="0422">0422</option><option value="0412">0412</option>
-                                <option value="0414">0414</option><option value="0424">0424</option>
-                                <option value="0416">0416</option><option value="0426">0426</option>  
-                            </select>
-                            <input type="text" name="simplePhone" maxLength={7} value={formData.simplePhone || ''} onChange={handleNumberChange} disabled={!isEditing} placeholder="1234567" className={`flex-1 rounded-l-none rounded-r-lg font-mono ${inputClass}`} />
-                        </div>
+                        <div className="flex w-full shadow-sm rounded-lg">
+                    {/* Input: Código de área */}
+                    <input 
+                        type="tel" 
+                        name="phoneCode" 
+                        value={formData.phoneCode || ''} 
+                        onChange={handleNumberChange} // <--- Pasamos a usar el filtro de números aquí también
+                        disabled={!isEditing} 
+                        maxLength={4} 
+                        minLength={4} 
+                        required
+                        placeholder="0414" 
+                        className={`w-24 text-center font-mono focus:z-10 cursor-text ${prefixSelectClass}`} 
+                    />
+                    
+                    {/* Input: Número restante */}
+                    <input 
+                        type="tel" 
+                        name="simplePhone" 
+                        maxLength={7} 
+                        value={formData.simplePhone || ''} 
+                        onChange={handleNumberChange} 
+                        disabled={!isEditing} 
+                        placeholder="1234567" 
+                        className={`flex-1 rounded-l-none rounded-r-lg font-mono focus:z-10 ${inputClass}`} 
+                    />
+                </div>
                     </div>
                 </div>
 

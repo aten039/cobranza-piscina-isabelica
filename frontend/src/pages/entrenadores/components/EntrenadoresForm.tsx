@@ -23,14 +23,20 @@ const EntrenadoresForm: React.FC = () => {
   
   const [loading, setLoading] = useState(false);
 
-  // 1. Manejador de cambios
+  // 1. Manejador de cambios actualizado para filtrar números
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    // Convertimos a mayúsculas solo si es texto o email
-    const finalValue = (type === 'text' || type === 'email') 
-      ? value.toUpperCase() 
-      : value;
+    let finalValue = value;
+
+    // Si el campo es cédula o teléfono, eliminamos cualquier carácter que no sea un número
+    if (name === 'cedula' || name === 'telefono') {
+      finalValue = value.replace(/\D/g, '');
+    } 
+    // Si es texto, lo convertimos a mayúsculas
+    else if (type === 'text' || type === 'email') {
+      finalValue = value.toUpperCase();
+    }
 
     setFormData((prev) => ({ ...prev, [name]: finalValue }));
   };
@@ -46,7 +52,9 @@ const EntrenadoresForm: React.FC = () => {
       errors.push("Debes ingresar el número de TELÉFONO.");
     } else if (formData.telefono.length < 7) {
       errors.push("El teléfono parece incompleto (muy corto).");
-    }
+    } 
+    if (formData.phoneCode.trim().length !== 4) errors.push("El código de área del teléfono debe tener 4 dígitos.");
+    
 
     if (errors.length > 0) {
       alert("⚠️ Faltan datos obligatorios para continuar:\n\n- " + errors.join("\n- "));
@@ -87,7 +95,6 @@ const EntrenadoresForm: React.FC = () => {
   };
 
   // --- ESTILOS COMPARTIDOS ---
-  // Estos estilos aseguran que la Cédula y el Teléfono se vean idénticos
   const selectPrefixClass = "bg-gray-100 border border-gray-300 border-r-0 rounded-l-lg text-sm px-2 py-2.5 outline-none focus:bg-white focus:border-blue-500 transition-colors cursor-pointer text-center font-bold text-gray-700";
   const inputSuffixClass = "w-full border border-gray-300 rounded-r-lg p-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-0 uppercase placeholder-gray-300 transition-all font-mono";
 
@@ -139,6 +146,7 @@ const EntrenadoresForm: React.FC = () => {
               >
                 <option value="V">V</option>
                 <option value="E">E</option>
+                <option value="P">P</option>
               </select>
               <input
                 type="tel"
@@ -152,38 +160,35 @@ const EntrenadoresForm: React.FC = () => {
             </div>
           </div>
 
-          {/* CAMPO TELÉFONO (Diseño igualado) */}
+          {/* CAMPO TELÉFONO */}
           <div>
            <label className="text-xs font-bold text-gray-500 ml-1 mb-1 flex items-center gap-1">
              <FaPhoneAlt className="text-gray-400 text-[10px]" /> Teléfono <span className="text-red-500">*</span>
            </label>
-           <div className="flex w-full shadow-sm">
-               {/* Select: Código de área */}
-               <select
-                   name="phoneCode"
-                   value={formData.phoneCode}
-                   onChange={handleChange}
-                   className={`${selectPrefixClass} w-20`} // Ajustado a w-20 para que quepan 4 dígitos bien
-               >
-                        <option value="0422">0422</option>
-                        <option value="0412">0412</option>
-                        <option value="0414">0414</option>
-                        <option value="0424">0424</option>
-                        <option value="0416">0416</option>
-                        <option value="0426">0426</option>
-               </select>
+          <div className="flex w-full shadow-sm rounded-lg">
+    {/* Input: Código de área */}
+    <input
+        type="tel"
+        name="phoneCode"
+        value={formData.phoneCode}
+        onChange={handleChange}
+        maxLength={4}
+        minLength={4}
+        placeholder="0414"
+        className={`${selectPrefixClass} w-20 font-mono focus:z-10 cursor-text`}
+    />
 
-               {/* Input: Número restante */}
-               <input
-                   type="tel"
-                   name="telefono"
-                   value={formData.telefono}
-                   onChange={handleChange}
-                   maxLength={7}
-                   placeholder="1234567"
-                   className={inputSuffixClass}
-               />
-           </div>
+    {/* Input: Número restante */}
+    <input
+        type="tel"
+        name="telefono"
+        value={formData.telefono}
+        onChange={handleChange}
+        maxLength={7}
+        placeholder="1234567"
+        className={`${inputSuffixClass} focus:z-10`}
+    />
+</div>
           </div>
         </div>
 
