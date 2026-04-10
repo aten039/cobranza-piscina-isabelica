@@ -61,7 +61,7 @@ export const DashboardStats = () => {
     const estadisticas = [
         { id: 'deudores', titulo: 'Deudores Activos', valor: stats.deudoresActivos.toString(), tendencia: 'Urgente', tendenciaPositiva: false, icono: FaCircleExclamation, color: 'rose', ruta: '/deuda' },
         { id: 'por-vencer', titulo: 'Por Vencer', valor: stats.porVencer.toString(), tendencia: 'Aviso', tendenciaPositiva: true, icono: FaClock, color: 'amber', ruta: '/deuda' },
-        { id: 'alumnos', titulo: 'Alumnos Activos', valor: stats.totalAtletas.toString(), tendencia: 'Actuales', tendenciaPositiva: true, icono: FaUsers, color: 'blue', ruta: '/atletas' },
+        { id: 'atletas', titulo: 'atletas Activos', valor: stats.totalAtletas.toString(), tendencia: 'Actuales', tendenciaPositiva: true, icono: FaUsers, color: 'blue', ruta: '/atletas' },
         { id: 'matriculas', titulo: 'Matrículas Totales', valor: stats.totalMatriculas.toString(), tendencia: 'Activas', tendenciaPositiva: true, icono: FaClipboardList, color: 'teal', ruta: '/atletas' },
         { id: 'entrenadores', titulo: 'Entrenadores', valor: stats.totalEntrenadores.toString(), tendencia: 'Plantilla', tendenciaPositiva: true, icono: FaChalkboardUser, color: 'purple', ruta: '/entrenadores' }
     ];

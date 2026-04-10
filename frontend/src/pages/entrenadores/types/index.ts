@@ -39,7 +39,7 @@ export interface ClaseFormData {
   horarios: HorarioInterno[];
 }
 
-// --- Tipos para Alumnos (Atletas) ---
+// --- Tipos para atletas (Atletas) ---
 export interface Atleta extends RecordModel {
   nombre: string;
   apellido: string;

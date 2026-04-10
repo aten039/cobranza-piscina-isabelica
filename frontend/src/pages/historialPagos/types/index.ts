@@ -36,19 +36,6 @@ export interface MatriculaExpandida extends RecordModel {
   };
 }
 
-export interface PagoHistorial extends RecordModel {
-  id: string;
-  matricula_id: string;
-  monto: number;
-  referencia: string;
-  fecha_pago: string;
-  type: 'USD' | 'BS'; // Moneda del pago
-  metodo: string;     // Método de pago (zelle, pago_movil, efectivo, etc.)
-  liquidacion_id?: string;
-  expand?: {
-    matricula_id?: MatriculaExpandida;
-  };
-}
 
 export interface FiltrosHistorial {
   fechaInicio: string;
@@ -78,11 +65,12 @@ export interface PagoHistorial extends RecordModel {
   monto: number;
   referencia: string;
   fecha_pago: string;
-  cobertura_desde: string; // Fecha de inicio del mes pagado
-  cobertura_hasta: string; // Fecha de fin del mes pagado
+  cobertura_desde: string; 
+  cobertura_hasta: string; 
   type: 'USD' | 'BS'; 
   metodo: string;     
-  liquidacion_id?: string; // Si está vacío, no se ha liquidado
+  liquidacion_id?: string; 
+  is_null?: boolean; // <--- AQUÍ DEBES AGREGAR ESTA LÍNEA
   expand?: {
     matricula_id?: MatriculaExpandida;
   };

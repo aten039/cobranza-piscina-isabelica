@@ -6,7 +6,7 @@ export const getUltimaCobertura = async (matriculaId: string): Promise<string | 
   try {
     // Buscamos el último pago registrado para esta matrícula, ordenado por cobertura_hasta descendente
     const result = await pb.collection('pagos').getList<UltimoPago>(1, 1, {
-      filter: `matricula_id="${matriculaId}"`,
+      filter: `matricula_id="${matriculaId}" && is_null=false`,
       sort: '-cobertura_hasta',
     });
 

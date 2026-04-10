@@ -482,12 +482,12 @@ const ClaseDetails: React.FC = () => {
           )}
         </div>
 
-        {/* COLUMNA DERECHA: Lista de Alumnos */}
+        {/* COLUMNA DERECHA: Lista de atletas */}
         <div className="lg:col-span-2">
           <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col h-full min-h-[500px] ${isDeleted ? 'border-slate-300' : 'border-slate-100'}`}>
             <div className={`p-6 border-b flex justify-between items-center ${isDeleted ? 'bg-slate-200 border-slate-300' : 'bg-slate-50/50 border-slate-100'}`}>
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <FaUserGraduate className={isDeleted ? "text-slate-500" : "text-blue-500"} /> Alumnos Matriculados {isDeleted && "(Histórico)"}
+                <FaUserGraduate className={isDeleted ? "text-slate-500" : "text-blue-500"} /> atletas Matriculados {isDeleted && "(Histórico)"}
               </h2>
               <span className={`${isDeleted ? 'bg-slate-300 text-slate-700' : 'bg-blue-100 text-blue-700'} px-3 py-1 rounded-full text-xs font-bold`}>
                 Total: {matriculas.length}
@@ -498,13 +498,13 @@ const ClaseDetails: React.FC = () => {
               {matriculas.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-slate-400">
                   <FaUserGraduate className="text-4xl mb-2 opacity-20" />
-                  <p>No hay alumnos inscritos en esta clase.</p>
+                  <p>No hay atletas inscritos en esta clase.</p>
                 </div>
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr>
-                      <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alumno</th>
+                      <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">atleta</th>
                       <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Contacto</th>
                       <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Estado</th>
                       <th className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Cobertura</th>

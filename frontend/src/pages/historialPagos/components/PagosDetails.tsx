@@ -9,12 +9,14 @@ import {
   FiClock, 
   FiFileText, 
   FiUsers, 
-  FiExternalLink 
+  FiExternalLink,
+  FiXCircle 
 } from "react-icons/fi";
 import type { PagoHistorial } from "@/pages/historialPagos/types";
 import { getPagoById } from "@/pages/historialPagos/services/getPagosById";
+import { anularPago } from "@/pages/historialPagos/services/anularPago";
 
-// Utilidades de formato
+// --- UTILIDADES DE FORMATO ---
 const formatMoneda = (monto: number, moneda: 'USD' | 'BS') => {
   if (moneda === 'USD') {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(monto);
@@ -68,12 +70,26 @@ const calcularEdad = (fechaNacimiento?: string) => {
   return edad;
 };
 
+// --- VALIDACIÓN DE 15 DÍAS ---
+const esMenorA15Dias = (fechaPago?: string) => {
+  if (!fechaPago) return false;
+  const safeDateString = fechaPago.includes(' ') ? fechaPago.replace(' ', 'T') : fechaPago;
+  const fecha = new Date(safeDateString);
+  const hoy = new Date();
+  
+  const diferenciaTiempo = hoy.getTime() - fecha.getTime();
+  const diferenciaDias = diferenciaTiempo / (1000 * 3600 * 24);
+  
+  return diferenciaDias <= 15;
+};
+
 export default function PagoDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
   const [pago, setPago] = useState<PagoHistorial | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAnulando, setIsAnulando] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDetalles = useCallback(async () => {
@@ -93,6 +109,25 @@ export default function PagoDetails() {
   useEffect(() => {
     fetchDetalles();
   }, [fetchDetalles]);
+
+  // Manejador para anular el pago
+  const handleAnular = async () => {
+    if (!pago?.id) return;
+    
+    const confirmar = window.confirm("¿Estás seguro de que deseas anular este pago? Esta acción no se puede deshacer.");
+    if (!confirmar) return;
+
+    setIsAnulando(true);
+    try {
+      await anularPago(pago.id);
+      setPago(prev => prev ? { ...prev, is_null: true } : null);
+      alert("Pago anulado exitosamente.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al anular el pago.");
+    } finally {
+      setIsAnulando(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -126,29 +161,64 @@ export default function PagoDetails() {
   const esMenor = edadAtleta !== null && edadAtleta < 18;
   const tieneRepresentante = !!atleta?.representante_nombre;
 
+  // Condiciones para mostrar el botón de anular
+  const fueAnulado = !!pago.is_null;
+  const cumpleTiempo = esMenorA15Dias(pago.fecha_pago);
+  const puedeAnular = !fueAnulado && !estaLiquidado && cumpleTiempo;
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 mb-12">
       
       {/* Botón Volver y Cabecera */}
-      <div className="flex items-center gap-4 mb-2">
-        <button
-          onClick={() => navigate(-1)}
-          className="cursor-pointer p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-full transition-colors"
-          title="Volver atrás"
-        >
-          <FiArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Detalles del Pago</h2>
-          <p className="text-sm text-slate-500">ID del Registro: <span className="font-mono">{pago.id}</span></p>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="cursor-pointer p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-full transition-colors"
+            title="Volver atrás"
+          >
+            <FiArrowLeft size={20} />
+          </button>
+          <div>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-slate-800">Detalles del Pago</h2>
+              {/* Etiqueta visual si está anulado */}
+              {fueAnulado && (
+                <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                  <FiXCircle size={14} /> Anulado
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-500">ID del Registro: <span className="font-mono">{pago.id}</span></p>
+          </div>
         </div>
+
+        {/* Botón de anular (Solo se muestra si cumple condiciones) */}
+        {puedeAnular && (
+          <button
+            onClick={handleAnular}
+            disabled={isAnulando}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors
+              ${isAnulando 
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                : 'bg-white text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-300 shadow-sm active:scale-95'
+              }`}
+          >
+            {isAnulando ? (
+              <span className="animate-spin border-b-2 border-slate-400 h-4 w-4 rounded-full"></span>
+            ) : (
+              <FiXCircle size={16} />
+            )}
+            {isAnulando ? "Anulando..." : "Anular Pago"}
+          </button>
+        )}
       </div>
 
-      {/* AQUÍ ESTÁ LA MAGIA DEL 2x2:
-        'grid-cols-1 md:grid-cols-2' crea las dos columnas.
-        'items-start' evita que las tarjetas se estiren verticalmente si su vecina es más grande.
+      {/* Si el pago está anulado, todo el contenido tiene un sutil efecto de opacidad 
+        para indicar inactividad visual, pero REMOVIMOS el pointer-events-none 
+        para que los enlaces sigan funcionando.
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+      <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 items-start transition-all ${fueAnulado ? 'opacity-80 grayscale-[40%]' : ''}`}>
         
         {/* CUADRANTE 1: Información del Atleta */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -174,7 +244,7 @@ export default function PagoDetails() {
                 <p className="text-slate-900 font-medium text-lg group-hover:text-blue-600 transition-colors">
                   {atleta ? `${atleta.nombre} ${atleta.apellido}` : "Desconocido"}
                 </p>
-                {atleta?.cedula && <p className="text-sm text-slate-500 font-mono">{atleta.cedula}</p>}
+                {atleta?.cedula && <p className="text-sm text-slate-500 font-mono">C.I: {atleta.cedula}</p>}
               </div>
               <FiExternalLink className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
             </div>
@@ -190,7 +260,7 @@ export default function PagoDetails() {
                 </p>
                 <div className="flex gap-4 mt-1">
                   {atleta?.representante_cedula && (
-                    <p className="text-xs text-slate-500 font-mono">{atleta.representante_cedula}</p>
+                    <p className="text-xs text-slate-500 font-mono">C.I: {atleta.representante_cedula}</p>
                   )}
                   {tieneRepresentante && atleta?.telefono && (
                     <p className="text-xs text-slate-500">Tel: {atleta.telefono}</p>

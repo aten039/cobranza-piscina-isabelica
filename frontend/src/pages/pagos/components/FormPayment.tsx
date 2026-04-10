@@ -197,7 +197,7 @@ const FormPayment: React.FC = () => {
          <div className="bg-green-50 text-green-600 p-4 rounded-xl"><FaCalendarCheck className="text-3xl" /></div>
          <div>
              <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Registro de Mensualidad</h1>
-             <p className="text-slate-500 text-sm font-medium">Asienta el pago de una clase en la que el alumno ya está matriculado.</p>
+             <p className="text-slate-500 text-sm font-medium">Asienta el pago de una clase en la que el atleta ya está matriculado.</p>
          </div>
       </div>
 
@@ -231,7 +231,7 @@ const FormPayment: React.FC = () => {
                         <div>
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Clase a Pagar *</label>
                             {matriculas.length === 0 ? (
-                                <div className="p-4 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold">El alumno no está matriculado en ninguna clase activa.</div>
+                                <div className="p-4 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold">El atleta no está matriculado en ninguna clase activa.</div>
                             ) : (
                                 <select 
                                     value={selectedMatriculaId}

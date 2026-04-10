@@ -107,8 +107,8 @@ const InscribirPages: React.FC = () => {
     const errors: string[] = [];
 
     // 1. Validar Datos Básicos
-    if (!formData.name.trim()) errors.push("Nombre del alumno");
-    if (!formData.surname.trim()) errors.push("Apellido del alumno");
+    if (!formData.name.trim()) errors.push("Nombre del atleta");
+    if (!formData.surname.trim()) errors.push("Apellido del atleta");
     if (!formData.dob) errors.push("Fecha de nacimiento");
     if (!formData.address.trim()) errors.push("Dirección");
 
@@ -124,12 +124,12 @@ const InscribirPages: React.FC = () => {
   }
       
     } else {
-      if (!formData.phoneNum.trim()) errors.push("Teléfono del alumno");
+      if (!formData.phoneNum.trim()) errors.push("Teléfono del atleta");
       if (formData.phoneNum.trim().length < 7) errors.push("El telefono debe tener al menos 7 dígitos");
       if (!formData.phoneCode || formData.phoneCode.length < 4) {
     errors.push("El código de área debe tener exactamente 4 dígitos (Ej: 0414).");
   }
-      if (!formData.cedulaNum.trim()) errors.push("Cédula del alumno");
+      if (!formData.cedulaNum.trim()) errors.push("Cédula del atleta");
     }
 
     // 3. Validar Selección de Clase
@@ -217,7 +217,7 @@ const InscribirPages: React.FC = () => {
                     <label className="block text-xs font-bold text-gray-500 uppercase">Seleccione una Clase</label>
                     {age !== null && (
                         <span className="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                            Edad del alumno: {age} años
+                            Edad del atleta: {age} años
                         </span>
                     )}
                   </div>

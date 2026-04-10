@@ -13,7 +13,7 @@ export const getClases = async (studentAge: number): Promise<IClass[]> => {
       sort: 'created',
       // 2. Aplicamos el filtro: 
       //    activo=true (Clase activa) Y 
-      //    edadMin <= studentAge (La edad mínima requerida es menor o igual a la edad del alumno)
+      //    edadMin <= studentAge (La edad mínima requerida es menor o igual a la edad del atleta)
       filter: `activo=true && edadMin <= ${studentAge}`, 
       
       expand: 'entrenador_id,clases_horarios_via_clase_id.horario_id', 

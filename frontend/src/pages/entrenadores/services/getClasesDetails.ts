@@ -17,7 +17,7 @@ export const getClaseDetails = async (claseId: string) => {
       sort: 'created' 
     });
 
-    // 3. Obtener Alumnos Matriculados
+    // 3. Obtener atletas Matriculados
     // Solo los activos, expandiendo los datos del atleta
     const matriculasPromise = pb.collection('vista_clase_alumnos').getFullList<VistaClaseAlumno>({
       filter: `clase_id="${claseId}"`,

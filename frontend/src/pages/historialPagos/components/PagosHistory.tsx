@@ -56,7 +56,6 @@ export default function PagosHistory() {
     perPage: 15,
   };
 
-  
   const [filtros, setFiltros] = useState<FiltrosHistorial>(defaultFiltros);
   const [totalPages, setTotalPages] = useState<number>(1);
 
@@ -101,24 +100,20 @@ export default function PagosHistory() {
     }
   };
 
-  // Función para limpiar filtros
   const handleLimpiarFiltros = () => {
     setSearchInput("");
     setFiltros(defaultFiltros);
   };
-
 
   const handleVerDetalles = (id: string) => {
     navigate(`/recordPagos/details/${id}`);
   };
 
   return (
-    // Se agregó mb-12 para dar bastante espacio en la parte inferior de la pantalla
     <div className="flex flex-col space-y-4 mb-12">
       
       {/* Barra de Herramientas y Filtros */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-        
         <div className="flex flex-wrap items-end gap-4 w-full">
           {/* Buscador general */}
           <div className="relative w-full lg:w-64">
@@ -187,7 +182,6 @@ export default function PagosHistory() {
             </select>
           </div>
           
-          {/* Botón de limpiar filtros */}
           <button
             onClick={handleLimpiarFiltros}
             className="cursor-pointer h-9 px-3 flex items-center gap-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-md hover:bg-slate-200 transition-colors"
@@ -241,15 +235,16 @@ export default function PagosHistory() {
                   const atleta = pago.expand?.matricula_id?.expand?.atleta_id;
                   const clase = pago.expand?.matricula_id?.expand?.clase_id;
                   const profesor = clase?.expand?.entrenador_id;
+                  const fueAnulado = !!pago.is_null;
                   
                   return (
-                    <tr key={pago.id} className="hover:bg-slate-50 transition-colors">
+                    // Si fue anulado, bajamos la opacidad de la fila para dar un efecto de "inactivo"
+                    <tr key={pago.id} className={`transition-colors ${fueAnulado ? 'bg-slate-50/50 opacity-75' : 'hover:bg-slate-50'}`}>
                       <td className="px-4 py-3 whitespace-nowrap text-slate-500">
                         {new Date(pago.fecha_pago).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 font-medium">
                         {atleta ? `${atleta.nombre} ${atleta.apellido}` : "N/A"}
-                        {/* Se eliminó el "V-" como solicitaste */}
                         {atleta?.cedula && <span className="block text-[11px] text-slate-400 font-normal">{atleta.cedula}</span>}
                       </td>
                       <td className="px-4 py-3 truncate max-w-[150px]">
@@ -258,35 +253,48 @@ export default function PagosHistory() {
                       <td className="px-4 py-3">
                         {profesor ? `${profesor.nombre} ${profesor.apellido}` : "N/A"}
                       </td>
+                      
+                      {/* COLUMNA MÉTODO (AQUÍ ESTÁ LA ETIQUETA) */}
                       <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-slate-700 text-[13px]">
-                            {formatMetodo(pago.metodo)}
-                          </span>
+                        <div className="flex flex-col items-start gap-1">
+                          <div className="flex items-center gap-2">
+                            {/* Si está anulado, tachamos el método de pago */}
+                            <span className={`font-semibold text-[13px] ${fueAnulado ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                              {formatMetodo(pago.metodo)}
+                            </span>
+                            
+                            {/* ETIQUETA MINI */}
+                            {fueAnulado && (
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase tracking-wider">
+                                Anulado
+                              </span>
+                            )}
+                          </div>
+
                           {pago.referencia && pago.referencia.toUpperCase() !== 'EFECTIVO' && (
                             <span className="font-mono text-[11px] text-slate-500">Ref: {pago.referencia}</span>
                           )}
                         </div>
                       </td>
-                      <td className={`px-4 py-3 font-semibold text-right ${pago.type === 'USD' ? 'text-emerald-700' : 'text-blue-700'}`}>
+                      
+                      <td className={`px-4 py-3 font-semibold text-right ${fueAnulado ? 'text-slate-400 line-through' : (pago.type === 'USD' ? 'text-emerald-700' : 'text-blue-700')}`}>
                         {formatMoneda(pago.monto, pago.type)}
                       </td>
-                      {/* Nuevo botón de acciones dinámico */}
-                        <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => handleVerDetalles(pago.id)}
-                            className="cursor-pointer group relative inline-flex items-center justify-center p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 hover:scale-110 shadow-sm"
-                            title="Ver detalles completos"
-                          >
-                            <FiEye size={18} className="transition-transform duration-300 group-hover:scale-110" />
-                            
-                            {/* Tooltip personalizado opcional (aparece en hover) */}
-                            <span className=" absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                              Ver Detalles
-                            </span>
-                          </button>
-                        </td>
-                      </tr>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => handleVerDetalles(pago.id)}
+                          className={`cursor-pointer group relative inline-flex items-center justify-center p-2 rounded-full transition-all duration-300 hover:scale-110 shadow-sm
+                            ${fueAnulado ? 'bg-slate-200 text-slate-500 hover:bg-slate-300' : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'}
+                          `}
+                          title="Ver detalles completos"
+                        >
+                          <FiEye size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                          <span className=" absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            Ver Detalles
+                          </span>
+                        </button>
+                      </td>
+                    </tr>
                   );
                 })
               )}
