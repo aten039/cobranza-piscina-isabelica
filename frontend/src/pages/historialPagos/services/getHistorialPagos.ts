@@ -11,7 +11,7 @@ export const getHistorialPagos = async ({
   profesorId,
   searchTerm,
   page = 1,
-  perPage = 15,
+  perPage = 30,
   soloPendientes
 }: FiltrosHistorial): Promise<ListResult<PagoHistorial>> => {
   try {

@@ -35,6 +35,23 @@ const formatMetodo = (metodo: string) => {
   return map[metodo] || metodo.replace(/_/g, ' ').toUpperCase();
 };
 
+// --- NUEVA FUNCIÓN: Formato de Fecha blindado para Venezuela ---
+const formatDateVE = (dateString?: string) => {
+  if (!dateString) return "N/A";
+  try {
+    // Reemplazamos espacio por T por seguridad en Safari
+    const safeDateString = dateString.includes(' ') ? dateString.replace(' ', 'T') : dateString;
+    const date = new Date(safeDateString);
+    if (isNaN(date.getTime())) return "Fecha Inválida";
+    
+    // Forzamos la zona horaria UTC para evitar el salto al día anterior
+    return date.toLocaleDateString('es-VE', { timeZone: 'UTC' });
+  } catch (error) {
+    console.error("Error al formatear fecha:", error);
+    return "Error";
+  }
+};
+
 export default function PagosHistory() {
   const navigate = useNavigate();
   const [pagos, setPagos] = useState<PagoHistorial[]>([]);
@@ -45,7 +62,7 @@ export default function PagosHistory() {
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
 
-  // Estado inicial de los filtros para poder restaurarlo fácilmente
+  // Estado inicial de los filtros (AQUÍ CAMBIAMOS A 30 REGISTROS)
   const defaultFiltros: FiltrosHistorial = {
     fechaInicio: getLastMonthString(),
     fechaFin: getTodayString(),
@@ -53,7 +70,7 @@ export default function PagosHistory() {
     profesorId: "",
     searchTerm: "",
     page: 1,
-    perPage: 15,
+    perPage: 30, // <--- CAMBIADO DE 15 A 30
   };
 
   const [filtros, setFiltros] = useState<FiltrosHistorial>(defaultFiltros);
@@ -238,10 +255,10 @@ export default function PagosHistory() {
                   const fueAnulado = !!pago.is_null;
                   
                   return (
-                    // Si fue anulado, bajamos la opacidad de la fila para dar un efecto de "inactivo"
                     <tr key={pago.id} className={`transition-colors ${fueAnulado ? 'bg-slate-50/50 opacity-75' : 'hover:bg-slate-50'}`}>
+                      {/* AQUÍ APLICAMOS LA NUEVA FUNCIÓN DE FECHA */}
                       <td className="px-4 py-3 whitespace-nowrap text-slate-500">
-                        {new Date(pago.fecha_pago).toLocaleDateString()}
+                        {formatDateVE(pago.fecha_pago)}
                       </td>
                       <td className="px-4 py-3 font-medium">
                         {atleta ? `${atleta.nombre} ${atleta.apellido}` : "N/A"}
@@ -254,16 +271,14 @@ export default function PagosHistory() {
                         {profesor ? `${profesor.nombre} ${profesor.apellido}` : "N/A"}
                       </td>
                       
-                      {/* COLUMNA MÉTODO (AQUÍ ESTÁ LA ETIQUETA) */}
+                      {/* COLUMNA MÉTODO (ETIQUETA ANULADO) */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-1">
                           <div className="flex items-center gap-2">
-                            {/* Si está anulado, tachamos el método de pago */}
                             <span className={`font-semibold text-[13px] ${fueAnulado ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
                               {formatMetodo(pago.metodo)}
                             </span>
                             
-                            {/* ETIQUETA MINI */}
                             {fueAnulado && (
                               <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase tracking-wider">
                                 Anulado

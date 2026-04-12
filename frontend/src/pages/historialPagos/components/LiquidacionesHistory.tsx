@@ -1,12 +1,10 @@
-// ARCHIVO: src/pages/historialLiquidaciones/LiquidacionesHistory.tsx
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiChevronLeft, FiChevronRight, FiFilter, FiSearch, FiRefreshCcw, FiEye } from "react-icons/fi";
 
-import { getProfesoresOptions } from "@/pages/historialPagos/services/getProfesoresOption"; // Reusado del módulo de pagos
+import { getProfesoresOptions } from "@/pages/historialPagos/services/getProfesoresOption"; 
 
-import { PAYMENT_OPTIONS, type FiltrosLiquidacion, type LiquidacionHistorial, type ProfesorOpcion } from "@/pages/historialPagos/types"; // Usando tus constantes
+import { PAYMENT_OPTIONS, type FiltrosLiquidacion, type LiquidacionHistorial, type ProfesorOpcion } from "@/pages/historialPagos/types"; 
 import { getHistorialLiquidaciones } from "@/pages/historialPagos/services/getHistorialLiquidaciones";
 
 // --- Helpers ---
@@ -31,6 +29,21 @@ const formatMetodo = (metodo: string) => {
   return metodo.replace(/_/g, ' ').toUpperCase();
 };
 
+// --- NUEVA FUNCIÓN: Formato de Fecha blindado para Venezuela ---
+const formatDateVE = (dateString?: string) => {
+  if (!dateString) return "N/A";
+  try {
+    const safeDateString = dateString.includes(' ') ? dateString.replace(' ', 'T') : dateString;
+    const date = new Date(safeDateString);
+    if (isNaN(date.getTime())) return "Fecha Inválida";
+    // Forzamos la zona horaria UTC para evitar el salto al día anterior
+    return date.toLocaleDateString('es-VE', { timeZone: 'UTC' });
+  } catch (error) {
+    console.error("Error al formatear fecha:", error);
+    return "Error";
+  }
+};
+
 export default function LiquidacionesHistory() {
   const navigate = useNavigate();
   const [liquidaciones, setLiquidaciones] = useState<LiquidacionHistorial[]>([]);
@@ -46,7 +59,7 @@ export default function LiquidacionesHistory() {
     profesorId: "",
     searchTerm: "",
     page: 1,
-    perPage: 15,
+    perPage: 30, // <--- AUMENTADO A 30 REGISTROS
   };
 
   const [filtros, setFiltros] = useState<FiltrosLiquidacion>(defaultFiltros);
@@ -209,8 +222,9 @@ export default function LiquidacionesHistory() {
                   
                   return (
                     <tr key={liq.id} className="hover:bg-slate-50 transition-colors">
+                      {/* AQUÍ APLICAMOS LA FUNCIÓN BLINDADA */}
                       <td className="px-4 py-3 whitespace-nowrap text-slate-500">
-                        {new Date(liq.fecha_pago).toLocaleDateString('es-VE')}
+                        {formatDateVE(liq.fecha_pago)}
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-800">
                         {profesor ? `${profesor.nombre} ${profesor.apellido}` : "N/A"}

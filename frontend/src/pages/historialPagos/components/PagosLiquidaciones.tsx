@@ -1,11 +1,9 @@
-// ARCHIVO: src/pages/historialPagos/PagosLiquidaciones.tsx
-
 import { getClasesOptions } from "@/pages/historialPagos/services/getClasesOption";
 import { getHistorialPagos } from "@/pages/historialPagos/services/getHistorialPagos";
 import { getProfesoresOptions } from "@/pages/historialPagos/services/getProfesoresOption";
 import { procesarLiquidacion } from "@/pages/historialPagos/services/procesarLiquidacion";
 import { 
-  PAYMENT_OPTIONS, // <-- Nueva importación de la estructura
+  PAYMENT_OPTIONS, 
   type ClaseOpcion, 
   type FiltrosHistorial, 
   type PagoHistorial, 
@@ -27,7 +25,6 @@ const formatMoneda = (monto: number, moneda: 'USD' | 'BS') => {
   return new Intl.NumberFormat("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(monto) + " Bs";
 };
 
-// Actualizado para buscar en la nueva estructura anidada
 const formatMetodo = (metodo: string) => {
   if (!metodo) return "N/A";
   const opBS = PAYMENT_OPTIONS.BS.find(m => m.value === metodo);
@@ -35,6 +32,21 @@ const formatMetodo = (metodo: string) => {
   const opUSD = PAYMENT_OPTIONS.USD.find(m => m.value === metodo);
   if (opUSD) return opUSD.label;
   return metodo.replace(/_/g, ' ').toUpperCase();
+};
+
+// --- NUEVA FUNCIÓN: Formato de Fecha blindado para Venezuela ---
+const formatDateVE = (dateString?: string) => {
+  if (!dateString) return "N/A";
+  try {
+    const safeDateString = dateString.includes(' ') ? dateString.replace(' ', 'T') : dateString;
+    const date = new Date(safeDateString);
+    if (isNaN(date.getTime())) return "Fecha Inválida";
+    // Forzamos la zona horaria UTC para evitar el salto al día anterior
+    return date.toLocaleDateString('es-VE', { timeZone: 'UTC' });
+  } catch (error) {
+    console.error("Error al formatear fecha:", error);
+    return "Error";
+  }
 };
 
 export default function PagosLiquidaciones() {
@@ -77,7 +89,7 @@ export default function PagosLiquidaciones() {
     profesorId: "",
     searchTerm: "",
     page: 1,
-    perPage: 15,
+    perPage: 30,
     soloPendientes: true,
   };
 
@@ -242,7 +254,11 @@ export default function PagosLiquidaciones() {
     }
 
     setIsSubmitting(true);
+    
     try {
+      // --- SOLUCIÓN: Blindamos la fecha al mediodía UTC antes de enviarla ---
+      const fechaBlindada = `${formLiq.fecha_pago}T12:00:00.000Z`;
+
       await procesarLiquidacion(
         {
           entrenador_id: selectedProfesorId,
@@ -250,7 +266,7 @@ export default function PagosLiquidaciones() {
           referencia: formLiq.metodo === 'efectivo' ? 'EFECTIVO' : formLiq.referencia,
           type: formLiq.type,
           metodo: formLiq.metodo,
-          fecha_pago: formLiq.fecha_pago
+          fecha_pago: fechaBlindada // <--- Le pasamos la fecha protegida aquí
         },
         Array.from(selectedPagos)
       );
@@ -339,7 +355,6 @@ export default function PagosLiquidaciones() {
                       value={formLiq.type} 
                       onChange={(e) => {
                         const nuevaMoneda = e.target.value as 'USD' | 'BS';
-                        // Reseteo Inteligente: Borramos el método y la ref porque cambiaron las opciones disponibles
                         setFormLiq({
                           ...formLiq, 
                           type: nuevaMoneda,
@@ -380,7 +395,6 @@ export default function PagosLiquidaciones() {
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white disabled:bg-slate-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       <option value="" disabled>Seleccione método</option>
-                      {/* Generación dinámica basada en la moneda seleccionada */}
                       {PAYMENT_OPTIONS[formLiq.type].map(opcion => (
                         <option key={opcion.value} value={opcion.value}>{opcion.label}</option>
                       ))}
@@ -513,8 +527,9 @@ export default function PagosLiquidaciones() {
                           className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600 cursor-pointer h-4 w-4 disabled:cursor-not-allowed"
                         />
                       </td>
+                      {/* AQUÍ APLICAMOS LA FUNCIÓN BLINDADA */}
                       <td className="px-4 py-3 whitespace-nowrap text-slate-500">
-                        {new Date(pago.fecha_pago).toLocaleDateString('es-VE')}
+                        {formatDateVE(pago.fecha_pago)}
                       </td>
                       <td className="px-4 py-3 font-semibold text-slate-800">
                         {profesor ? `${profesor.nombre} ${profesor.apellido}` : "N/A"}

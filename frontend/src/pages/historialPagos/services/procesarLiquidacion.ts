@@ -1,4 +1,3 @@
-// ARCHIVO: src/pages/historialPagos/services/procesarLiquidacion.ts
 
 import { pb } from "@/lib/pb";
 import type { CreateLiquidacionDTO } from "@/pages/historialPagos/types";

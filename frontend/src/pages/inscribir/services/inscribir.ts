@@ -5,17 +5,12 @@ import type { IClass, IFormData } from '@/pages/inscribir/types';
 // 1. Modificamos la función para recibir la edad (studentAge)
 export const getClases = async (studentAge: number): Promise<IClass[]> => {
   try {
-    // Validación de seguridad: si la edad no es válida o es 0, no traemos nada
-    // o podrías quitar este if si quieres traer todo cuando no hay edad.
+    // Validación de seguridad
     if (studentAge === null || studentAge === undefined) return [];
 
     return await pb.collection('clases').getFullList<IClass>({
       sort: 'created',
-      // 2. Aplicamos el filtro: 
-      //    activo=true (Clase activa) Y 
-      //    edadMin <= studentAge (La edad mínima requerida es menor o igual a la edad del atleta)
       filter: `activo=true && edadMin <= ${studentAge}`, 
-      
       expand: 'entrenador_id,clases_horarios_via_clase_id.horario_id', 
     });
   } catch (error) {
@@ -39,6 +34,11 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
   const repFullName = `${formData.repName} ${formData.repSurname}`.trim();
   const repCedula = `${formData.repCedulaType}-${formData.repCedulaNum}`;
 
+  // --- SOLUCIÓN DE ZONA HORARIA (MEDIODÍA UTC) ---
+  const fechaNacimientoSegura = formData.dob ? `${formData.dob}T12:00:00.000Z` : "";
+  const fechaPagoSegura = formData.paymentDate ? `${formData.paymentDate}T12:00:00.000Z` : "";
+  const coberturaHastaSegura = formData.coverageDate ? `${formData.coverageDate}T12:00:00.000Z` : "";
+
   // VARIABLES DE CONTROL PARA ROLLBACK
   let createdAtletaId: string | null = null;
   let createdMatriculaId: string | null = null;
@@ -54,7 +54,7 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
       cedula: finalCedula,
       telefono: finalPhone,
       direccion: formData.address,
-      fecha_nacimiento: new Date(formData.dob).toISOString(),
+      fecha_nacimiento: fechaNacimientoSegura, // Usamos la fecha blindada
       representante_nombre: isMinor ? repFullName : '',
       representante_cedula: isMinor ? repCedula : '',
       condicion_medica: formData.hasMedical ? formData.medicalDesc : '',
@@ -69,7 +69,7 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
       atleta_id: atleta.id,
       clase_id: claseRecord.id,
       activo: true,
-      fecha_inscripcion: new Date().toISOString()
+      fecha_inscripcion: new Date().toISOString() // Esta se queda igual porque es el "AHORA" exacto
     };
 
     const matricula = await pb.collection('matriculas').create(matriculaData);
@@ -82,9 +82,9 @@ export const saveInscription = async (formData: IFormData, age: number | null) =
       referencia: formData.paymentMethod === 'efectivo' ? 'EFECTIVO' : formData.paymentRef,
       metodo: formData.paymentMethod,
       type: formData.currency,
-      fecha_pago: new Date(formData.paymentDate).toISOString(),
-      cobertura_desde: new Date(formData.paymentDate).toISOString(),
-      cobertura_hasta: new Date(formData.coverageDate).toISOString(),
+      fecha_pago: fechaPagoSegura,            // Usamos la fecha blindada
+      cobertura_desde: fechaPagoSegura,       // Usamos la fecha blindada
+      cobertura_hasta: coberturaHastaSegura,  // Usamos la fecha blindada
     };
 
     const pago = await pb.collection('pagos').create(pagoData);

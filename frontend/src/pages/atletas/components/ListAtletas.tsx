@@ -28,7 +28,7 @@ const ListAtletas: React.FC = () => {
       try {
         const result = await getAtletas({ 
           page, 
-          perPage: 10, 
+          perPage: 30, // <--- AUMENTADO DE 10 A 30 REGISTROS
           searchTerm, 
           activo: tabActivo // Pasamos el estado de la pestaña
         });
