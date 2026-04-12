@@ -13,6 +13,10 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+
+	_ "piscina_backend/migrations"
 )
 
 const (
@@ -56,12 +60,16 @@ func main() {
 
 	app := pocketbase.New()
 
+	// --- NUEVO 3: Registramos el plugin con Automigrate activado ---
+	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
+		Automigrate: true,
+	})
+	// ---------------------------------------------------------------
+
 	// 3. Configuración de Rutas y SPA (TODO DENTRO DE OnServe)
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 
 		// A. Servir archivos estáticos (Frontend) con soporte SPA
-		// En v0.23+ se usa "{path...}" para capturar todo
-		// El 'true' activa el fallback a index.html para rutas no encontradas (SPA)
 		e.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), true))
 
 		// B. Abrir el navegador automáticamente
@@ -70,7 +78,6 @@ func main() {
 			openBrowser(AppURL)
 		}()
 
-		// IMPORTANTE: Debes retornar e.Next() para que el servidor continúe iniciando
 		return e.Next()
 	})
 
