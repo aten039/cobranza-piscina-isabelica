@@ -153,15 +153,20 @@ const FormPayment: React.FC = () => {
     try {
       setSaving(true);
       
+      // --- SOLUCIÓN DE ZONA HORARIA (MEDIODÍA UTC) ---
+      // Protegemos las fechas antes de enviarlas al servicio
+      const fechaPagoSegura = paymentData.paymentDate ? `${paymentData.paymentDate}T12:00:00.000Z` : "";
+      const coberturaHastaSegura = paymentData.coverageDate ? `${paymentData.coverageDate}T12:00:00.000Z` : "";
+
       await createPagoMensualidad({
           matricula_id: selectedMatriculaId,
           monto: Number(paymentData.paymentAmount),
           referencia: paymentData.paymentRef.trim() || 'EFECTIVO',
           
-          // FECHAS
-          fecha_pago: paymentData.paymentDate + ' 12:00:00.000Z', 
-          cobertura_desde: paymentData.paymentDate + ' 12:00:00.000Z', // <-- AÑADIDO (Toma el día del pago)
-          cobertura_hasta: paymentData.coverageDate + ' 12:00:00.000Z',
+          // FECHAS (Ahora usando las variables seguras)
+          fecha_pago: fechaPagoSegura, 
+          cobertura_desde: fechaPagoSegura, 
+          cobertura_hasta: coberturaHastaSegura,
           
           // METODOS Y MONEDA
           type: paymentData.currency,
@@ -172,7 +177,6 @@ const FormPayment: React.FC = () => {
       setTimeout(() => navigate(`/atletas/perfil/${id}`), 2500);
 
     } catch (err) {
-        // Aprovechamos para imprimir el error exacto en consola si sigue fallando
         console.error("Fallo al guardar:", err);
         setError(err instanceof Error ? err.message : "Error desconocido al registrar el pago.");
     } finally {
